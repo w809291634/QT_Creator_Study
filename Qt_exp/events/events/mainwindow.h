@@ -18,22 +18,22 @@ public:
 
 protected:
     // Event handlers
-    bool event(QEvent *event);
-    virtual void mousePressEvent(QMouseEvent *event);
-    virtual void mouseReleaseEvent(QMouseEvent *event);
-    virtual void mouseDoubleClickEvent(QMouseEvent *event);
-    virtual void mouseMoveEvent(QMouseEvent *event);
+  bool event(QEvent *event) override;
+//     void mousePressEvent(QMouseEvent *event);
+//     void mouseReleaseEvent(QMouseEvent *event);
+//     void mouseDoubleClickEvent(QMouseEvent *event);
+//     void mouseMoveEvent(QMouseEvent *event);
 
-    virtual void keyPressEvent(QKeyEvent *event);
-    virtual void keyReleaseEvent(QKeyEvent *event);
-    virtual void focusInEvent(QFocusEvent *event);
-    virtual void focusOutEvent(QFocusEvent *event);
-    virtual void enterEvent(QEvent *event);
-    virtual void leaveEvent(QEvent *event);
-    virtual void paintEvent(QPaintEvent *event);
-    virtual void moveEvent(QMoveEvent *event);
-    virtual void resizeEvent(QResizeEvent *event);
-    virtual void closeEvent(QCloseEvent *event);
+//     void keyPressEvent(QKeyEvent *event);
+//     void keyReleaseEvent(QKeyEvent *event);
+//     void focusInEvent(QFocusEvent *event);
+//     void focusOutEvent(QFocusEvent *event);
+//     void enterEvent(QEvent *event);
+//     void leaveEvent(QEvent *event);
+//     void paintEvent(QPaintEvent *event);
+//     void moveEvent(QMoveEvent *event);
+//     void resizeEvent(QResizeEvent *event);
+//     void closeEvent(QCloseEvent *event);
 
 
 private:
