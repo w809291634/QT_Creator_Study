@@ -1,9 +1,6 @@
 #include "myevent.h"
 #include <QDebug>
 
-QEvent::Type m_eventType=static_cast<QEvent::Type>(QEvent::registerEventType());
-QEvent::Type m_eventType1=static_cast<QEvent::Type>(QEvent::registerEventType());
-
 myevent::myevent():
     QEvent(myEventype())
     {}

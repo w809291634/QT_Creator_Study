@@ -27,14 +27,15 @@ CONFIG += c++11
 SOURCES += \
         main.cpp \
         mainwindow.cpp \
-    myevent.cpp
+#    myevent.cpp
 
 HEADERS += \
         mainwindow.h \
-    myevent.h
+#    myevent.h
 
 FORMS += \
         mainwindow.ui
+
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

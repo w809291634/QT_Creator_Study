@@ -5,11 +5,13 @@
 #include <QEvent>
 #include <QTimer>
 #include <QDebug>
-#include "myevent.h"
 
 namespace Ui {
 class MainWindow;
 }
+
+extern QEvent::Type _postEvent;
+extern QEvent::Type _sendEvent;
 
 class MainWindow : public QMainWindow
 {
@@ -24,16 +26,30 @@ protected:
     bool eventFilter(QObject *object, QEvent *event) override;
     bool event(QEvent *event) override;
 
+    void mousePressEvent(QMouseEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event) override;
+    void mouseDoubleClickEvent(QMouseEvent *event) override;
+    void mouseMoveEvent(QMouseEvent *event) override;
+
+    void wheelEvent(QWheelEvent *event) override;
+    void keyPressEvent(QKeyEvent *event) override;
+
+    void moveEvent(QMoveEvent *event) override;
+    void resizeEvent(QResizeEvent *event) override;
+    void closeEvent(QCloseEvent *event) override;
+
 private slots:
     void handletimeout();
 
 private:
     Ui::MainWindow *ui;
     QTimer *timer;
-    myevent* _myevent;
-//    myevent event1{};
-//    myevent event2{};
-//    myevent event3{};
+
+// 自定义事件
+    QEvent*  postEvent;
+    QEvent*  sendEvent;
+
+
 };
 
 #endif // MAINWINDOW_H
