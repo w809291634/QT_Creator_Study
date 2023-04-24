@@ -3,6 +3,9 @@
 
 #include <QMainWindow>
 #include <QEvent>
+#include <QTimer>
+#include <QDebug>
+#include "myevent.h"
 
 namespace Ui {
 class MainWindow;
@@ -14,30 +17,23 @@ class MainWindow : public QMainWindow
 
 public:
     explicit MainWindow(QWidget *parent = nullptr);
-    ~MainWindow();
+    ~MainWindow() override;
 
 protected:
-    // Event handlers
-  bool event(QEvent *event) override;
-//     void mousePressEvent(QMouseEvent *event);
-//     void mouseReleaseEvent(QMouseEvent *event);
-//     void mouseDoubleClickEvent(QMouseEvent *event);
-//     void mouseMoveEvent(QMouseEvent *event);
+    // 事件相关
+    bool eventFilter(QObject *object, QEvent *event) override;
+    bool event(QEvent *event) override;
 
-//     void keyPressEvent(QKeyEvent *event);
-//     void keyReleaseEvent(QKeyEvent *event);
-//     void focusInEvent(QFocusEvent *event);
-//     void focusOutEvent(QFocusEvent *event);
-//     void enterEvent(QEvent *event);
-//     void leaveEvent(QEvent *event);
-//     void paintEvent(QPaintEvent *event);
-//     void moveEvent(QMoveEvent *event);
-//     void resizeEvent(QResizeEvent *event);
-//     void closeEvent(QCloseEvent *event);
-
+private slots:
+    void handletimeout();
 
 private:
     Ui::MainWindow *ui;
+    QTimer *timer;
+    myevent* _myevent;
+//    myevent event1{};
+//    myevent event2{};
+//    myevent event3{};
 };
 
 #endif // MAINWINDOW_H
