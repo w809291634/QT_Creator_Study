@@ -14,7 +14,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     this->installEventFilter(this);         // 为自身安装事件过滤器
 
-    sendEvent =new QEvent(_sendEvent);
+    sendEvent.reset(new QEvent(_sendEvent));
 
     // 定时器方法一
     timer=new QTimer();
@@ -26,18 +26,16 @@ MainWindow::~MainWindow()
 {
     qDebug()<<"exit";
     delete ui;
-    delete postEvent;
-    delete sendEvent;
 }
 
 // 定时器超时 处理函数
 void MainWindow::handletimeout(){
     //postevent
-    postEvent =new QEvent(_postEvent);                           // postEvent 自动回收 _postEvent
-    QCoreApplication::postEvent(this, postEvent);
+    QCoreApplication::postEvent(this, new QEvent(_postEvent));              // postEvent 自动回收 _postEvent
 
     //sendEvent
-    qDebug() <<QCoreApplication::sendEvent(this, sendEvent);     // sendEvent 需要手动回收 sendEvent
+    if(!sendEvent.isNull())
+        qDebug() <<QCoreApplication::sendEvent(this, sendEvent.data());     // sendEvent 需要手动回收 sendEvent
 }
 
 /* 应用程序事件过滤器 事件优先进入 eventFilter 函数*/
@@ -50,12 +48,13 @@ bool MainWindow::eventFilter(QObject *object, QEvent *event)
 
     /* space按键处理 */
     if (object == this && event->type() == QEvent::KeyPress) {
-        QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
-        if (keyEvent->key() == Qt::Key_Space) {
-            QString mesg=QString("空格按键");
-            ui->statusBar->showMessage(head+mesg);
-            ui->textEdit->append(head+QString("[%1] %2").arg(mesg).arg(QDateTime::currentDateTime().toString("hh:mm:ss")));
-            return true;                                        // 事件停止传播
+        if(QKeyEvent *keyEvent = dynamic_cast<QKeyEvent *>(event)){
+            if (keyEvent->key() == Qt::Key_Space) {
+                QString mesg=QString("空格按键");
+                ui->statusBar->showMessage(head+mesg);
+                ui->textEdit->append(head+QString("[%1] %2").arg(mesg).arg(QDateTime::currentDateTime().toString("hh:mm:ss")));
+                return true;                                        // 事件停止传播
+            }
         }
     }
 

@@ -5,7 +5,7 @@
 #include <QEvent>
 #include <QTimer>
 #include <QDebug>
-
+#include <QPushButton>
 namespace Ui {
 class MainWindow;
 }
@@ -45,11 +45,8 @@ private:
     Ui::MainWindow *ui;
     QTimer *timer;
 
-// 自定义事件
-    QEvent*  postEvent;
-    QEvent*  sendEvent;
-
-
+    // 自定义事件
+    QSharedPointer<QEvent> sendEvent=nullptr;
 };
 
 #endif // MAINWINDOW_H
