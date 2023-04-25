@@ -28,7 +28,8 @@ private Q_SLOTS:
     void on_btn_close_2_clicked();
     void on_btn_send_2_clicked();
     //  自定义槽函数
-    void set_mian_label(const QString str);
+    void set_mian_label(const QString str);     // 子窗口 设置文本的槽函数
+    void form_close_handle();  // 子窗口 关闭信号的处理
 
 private:
     Ui::MainWindow *ui;

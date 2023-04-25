@@ -18,6 +18,7 @@ public:
                   QWidget *parent = nullptr);
     ~Form();
 
+
 signals:
     void close();              // 通知主窗口 子窗口关闭
     void sendMainText(const QString str);
@@ -32,6 +33,7 @@ private slots:
     void on_btn_close_clicked();
     void on_btn_send_to_main_clicked();
     void on_btn_send_to_other_clicked();
+
 public slots:
     void setlabelText(const QString str);
 
