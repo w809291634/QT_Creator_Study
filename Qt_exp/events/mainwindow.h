@@ -48,5 +48,4 @@ private:
     // 自定义事件
     QSharedPointer<QEvent> sendEvent=nullptr;
 };
-
 #endif // MAINWINDOW_H

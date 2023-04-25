@@ -15,7 +15,6 @@ MainWindow::MainWindow(QWidget *parent) :
     this->installEventFilter(this);         // 为自身安装事件过滤器
 
     sendEvent.reset(new QEvent(_sendEvent));
-
     // 定时器方法一
     timer=new QTimer();
     connect(timer,SIGNAL(timeout()), this, SLOT(handletimeout()));
