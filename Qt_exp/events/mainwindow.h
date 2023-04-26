@@ -46,6 +46,6 @@ private:
     QTimer *timer;
 
     // 自定义事件
-    QSharedPointer<QEvent> sendEvent=nullptr;
+    QSharedPointer<QEvent> sendEvent=static_cast<QSharedPointer<QEvent>>(nullptr);
 };
 #endif // MAINWINDOW_H

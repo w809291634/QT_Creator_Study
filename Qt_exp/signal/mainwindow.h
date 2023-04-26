@@ -33,8 +33,8 @@ private Q_SLOTS:
 
 private:
     Ui::MainWindow *ui;
-    QSharedPointer<Form> from_1=nullptr;
-    QSharedPointer<Form> from_2=nullptr;
+    QSharedPointer<Form> from_1=static_cast<QSharedPointer<Form>>(nullptr);
+    QSharedPointer<Form> from_2=static_cast<QSharedPointer<Form>>(nullptr);
 };
 
 #endif // MAINWINDOW_H
