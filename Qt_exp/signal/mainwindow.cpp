@@ -12,7 +12,7 @@ MainWindow::MainWindow(QWidget *parent) :
     from_1.reset(new Form("窗口1","窗口1通知主窗口","窗口1通知窗口2"));
     from_2.reset(new Form("窗口2","窗口2通知主窗口","窗口2通知窗口1"));
 
-    // 设置按钮和子窗口状态同步
+    // 设置按钮和子窗口状态同步A
     from_1->hide();
     from_2->hide();
     ui->btn_send_1->setEnabled(false);
@@ -28,7 +28,7 @@ MainWindow::MainWindow(QWidget *parent) :
             this,SLOT(set_mian_label(const QString)));
     connect(from_1.data(),SIGNAL(sendOtherText(const QString)),
             from_2.data(),SLOT(setlabelText(const QString)));
-    connect(from_1.data(),SIGNAL(close()),
+    connect(from_1.data(),SIGNAL(form_close()),
             this,SLOT(form_close_handle()));
 
     // 设置 窗口2 --> 主窗口和 窗口1 的信号连接
@@ -36,7 +36,7 @@ MainWindow::MainWindow(QWidget *parent) :
             this,SLOT(set_mian_label(const QString)));
     connect(from_2.data(),SIGNAL(sendOtherText(const QString)),
             from_1.data(),SLOT(setlabelText(const QString)));
-    connect(from_2.data(),SIGNAL(close()),
+    connect(from_2.data(),SIGNAL(form_close()),
             this,SLOT(form_close_handle()));
 }
 

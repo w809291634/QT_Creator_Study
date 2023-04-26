@@ -63,6 +63,6 @@ void Form::on_btn_send_to_other_clicked()
 void Form::closeEvent(QCloseEvent*event)
 {
     (void)event;
-    emit close();
+    emit form_close();
 }
 

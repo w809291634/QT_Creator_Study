@@ -1,7 +1,7 @@
 #ifndef FORM_H
 #define FORM_H
-
 #include <QWidget>
+#include <QEvent>
 
 namespace Ui {
 class Form;
@@ -20,7 +20,7 @@ public:
 
 
 signals:
-    void close();              // 通知主窗口 子窗口关闭
+    void form_close();              // 通知主窗口 子窗口关闭
     void sendMainText(const QString str);
     void sendOtherText(const QString str);
 
