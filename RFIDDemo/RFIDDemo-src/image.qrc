@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/new/icon">
+        <file>image/RFID-Logo_05.png</file>
+        <file>image/RFIDDemo.ico</file>
+    </qresource>
+</RCC>
