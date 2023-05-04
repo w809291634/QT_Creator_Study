@@ -1,0 +1,25 @@
+1、helloqt                     	// 基础的登录样式 demo
+/* 内核 */
+2、events						// 内核中的事件部分
+3、property						// 对QT元对象的理解
+4、signal						// QT中重要的通信机制
+
+/* 控件 */
+5、basic_controls				// QT中界面的基础控件
+								// QPushButton、QToolButton、QRadioButton、QCheckBox、QLineEdit等等QCheckBox和QButtonGroup、QTime类和QTimeEdit、QToolBar和QAction
+6、windowed_controls			// QT中界面的窗口控件
+7、Dialog						// QT中界面的对话框控件
+
+
+8、Custom						// 自定义控件\自定义窗口\自定义对话框
+/* 线程和进程 */
+9、Threads						// 线程
+10、Ipc							// 进程
+
+
+/* 串口和网络编程 */
+11、串口demo					// SerialPort | 串口demo | SerialPort              |
+12、QTcpSocket					// QTcpSocket和QTcpServer进行TCP编程、使用QUdpSocket的UDP
+13、HTTP协议、基于服务器端/客户端的聊天示例
+
+
