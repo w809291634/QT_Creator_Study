@@ -1,8 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-//#include "skin.h"
-
 #include <QtDebug>
 #include <QTimer>
 
@@ -19,6 +17,7 @@ MainWindow::MainWindow(QWidget *parent) :
     initInterface();
     inttControl();
 }
+
 void MainWindow::initInterface()
 {
     ui->btn_2->setCheckable(true);
@@ -96,6 +95,7 @@ void MainWindow::initInterface()
     ui->lineEdit_4->setEchoMode(QLineEdit::Password);
 
 }
+
 void MainWindow::inttControl()
 {
     connect(ui->action_bar,SIGNAL(triggered()),this,SLOT(on_setCurrentIndex()));
@@ -194,9 +194,7 @@ void MainWindow::toolbutton_clicked()
             ui->statusBar->showMessage(QString("%1按下").arg(tbtn->objectName()));
         else
             ui->statusBar->showMessage(QString("%1弹起").arg(tbtn->objectName()));
-
         return;
-
     }
 
     ui->statusBar->showMessage(QString("%1被点击").arg(tbtn->objectName()));

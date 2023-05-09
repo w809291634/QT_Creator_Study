@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>716</width>
+    <width>759</width>
     <height>379</height>
    </rect>
   </property>
@@ -18,9 +18,9 @@
     <item>
      <widget class="QStackedWidget" name="stackedWidget">
       <property name="currentIndex">
-       <number>2</number>
+       <number>3</number>
       </property>
-      <widget class="QWidget" name="page_0">
+      <widget class="QWidget" name="page_7">
        <layout class="QGridLayout" name="gridLayout_15">
         <item row="0" column="0">
          <widget class="QGroupBox" name="gBox_datetime">
@@ -45,7 +45,7 @@
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="page_1">
+      <widget class="QWidget" name="page_5">
        <layout class="QGridLayout" name="gridLayout_13">
         <item row="0" column="1" rowspan="3">
          <widget class="QGroupBox" name="groupBox_7">
@@ -90,8 +90,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>337</width>
-             <height>216</height>
+             <width>354</width>
+             <height>210</height>
             </rect>
            </property>
            <attribute name="label">
@@ -112,8 +112,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>337</width>
-             <height>216</height>
+             <width>354</width>
+             <height>210</height>
             </rect>
            </property>
            <attribute name="label">
@@ -428,8 +428,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>664</width>
-             <height>357</height>
+             <width>692</width>
+             <height>372</height>
             </rect>
            </property>
            <layout class="QGridLayout" name="gridLayout_4">
@@ -617,8 +617,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>716</width>
-     <height>23</height>
+     <width>759</width>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_page">
@@ -702,12 +702,12 @@
    <slot>setValue(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>177</x>
-     <y>146</y>
+     <x>110</x>
+     <y>80</y>
     </hint>
     <hint type="destinationlabel">
-     <x>197</x>
-     <y>221</y>
+     <x>110</x>
+     <y>80</y>
     </hint>
    </hints>
   </connection>
@@ -718,12 +718,12 @@
    <slot>setValue(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>637</x>
-     <y>153</y>
+     <x>110</x>
+     <y>80</y>
     </hint>
     <hint type="destinationlabel">
-     <x>665</x>
-     <y>269</y>
+     <x>110</x>
+     <y>80</y>
     </hint>
    </hints>
   </connection>
@@ -734,12 +734,12 @@
    <slot>setValue(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>315</x>
-     <y>214</y>
+     <x>110</x>
+     <y>80</y>
     </hint>
     <hint type="destinationlabel">
-     <x>324</x>
-     <y>152</y>
+     <x>110</x>
+     <y>80</y>
     </hint>
    </hints>
   </connection>
@@ -750,12 +750,12 @@
    <slot>setValue(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>665</x>
-     <y>288</y>
+     <x>110</x>
+     <y>80</y>
     </hint>
     <hint type="destinationlabel">
-     <x>603</x>
-     <y>156</y>
+     <x>110</x>
+     <y>80</y>
     </hint>
    </hints>
   </connection>
@@ -766,12 +766,12 @@
    <slot>display(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>471</x>
-     <y>150</y>
+     <x>110</x>
+     <y>80</y>
     </hint>
     <hint type="destinationlabel">
-     <x>611</x>
-     <y>163</y>
+     <x>110</x>
+     <y>80</y>
     </hint>
    </hints>
   </connection>
