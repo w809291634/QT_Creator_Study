@@ -1,11 +1,11 @@
-1、helloqt                     	// 基础的登录样式 demo
+1、helloqt                     	// 基础的登录样式 demo			OK
 /* 内核 */
-2、events						// 内核中的事件部分
-3、property						// 对QT元对象的理解
-4、signal						// QT中重要的通信机制
+2、events						// 内核中的事件部分				OK
+3、property						// 对QT元对象的理解				OK
+4、signal						// QT中重要的通信机制			OK
 
 /* 控件 */
-5、basic_controls				// QT中界面的基础控件
+5、basic_controls				// QT中界面的基础控件			OK
 								// QPushButton、QToolButton、QRadioButton、QCheckBox、QLineEdit等等QCheckBox和QButtonGroup、QTime类和QTimeEdit、QToolBar和QAction
 6、windowed_controls			// QT中界面的窗口控件
 7、Dialog						// QT中界面的对话框控件
