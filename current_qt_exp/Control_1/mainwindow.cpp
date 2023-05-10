@@ -1,6 +1,8 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+//#include "skin.h"
+
 #include <QtDebug>
 #include <QTimer>
 
@@ -17,7 +19,6 @@ MainWindow::MainWindow(QWidget *parent) :
     initInterface();
     inttControl();
 }
-
 void MainWindow::initInterface()
 {
     ui->btn_2->setCheckable(true);
@@ -79,9 +80,9 @@ void MainWindow::initInterface()
     ui->doubleSpinBox_B->setValue(0);
 
     ui->lab_1->setText("123");
-    QPixmap pix(":/img/user.png");
+    QPixmap pix(":/images/camera/take_pressed.png");
     ui->lab_2->setPixmap(pix);
-    QMovie *movie = new QMovie(":/img/loading.gif");
+    QMovie *movie = new QMovie(":/images/etc/2021-3-20.gif");
     movie->setScaledSize(ui->lab_2->size());
     movie->start();
     ui->lab_3->setMovie(movie);
@@ -90,12 +91,11 @@ void MainWindow::initInterface()
 
     ui->lineEdit_1->setText("123");
     ui->lineEdit_2->setPlaceholderText("默认显示");
-    QRegExp regx("[0-9]+12");
+    QRegExp regx("^[1-9][0-9]*");
     ui->lineEdit_3->setValidator(new QRegExpValidator(regx, this));
     ui->lineEdit_4->setEchoMode(QLineEdit::Password);
 
 }
-
 void MainWindow::inttControl()
 {
     connect(ui->action_bar,SIGNAL(triggered()),this,SLOT(on_setCurrentIndex()));
@@ -194,7 +194,9 @@ void MainWindow::toolbutton_clicked()
             ui->statusBar->showMessage(QString("%1按下").arg(tbtn->objectName()));
         else
             ui->statusBar->showMessage(QString("%1弹起").arg(tbtn->objectName()));
+
         return;
+
     }
 
     ui->statusBar->showMessage(QString("%1被点击").arg(tbtn->objectName()));

@@ -67,6 +67,3 @@ DEFINES         += BUILD_BY_PRO
 #    system(xcopy $$src_dir $$dst_dir /y /e)
 #    system(xcopy $$skin_lib $$dst_dir /y /e)
 #}
-
-RESOURCES += \
-    resource.qrc
