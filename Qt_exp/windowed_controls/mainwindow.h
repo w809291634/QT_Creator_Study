@@ -22,6 +22,15 @@ public:
 
 private:
     Ui::MainWindow *ui;
+    void initInterface();
+//    void inttControl();
+//    void CreateMenu();
+
+private slots:
+
+
+
+
 };
 
 #endif // MAINWINDOW_H
