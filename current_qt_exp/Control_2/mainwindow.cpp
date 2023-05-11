@@ -1,8 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-//#include "skin.h"
-
 #include <QtDebug>
 #include <QDockWidget>
 #include <QMdiSubWindow>
