@@ -1,0 +1,12 @@
+<RCC>
+    <qresource prefix="/icon">
+        <file>icon/AI.png</file>
+        <file>icon/AI智能.png</file>
+        <file>icon/产学.png</file>
+        <file>icon/创新.png</file>
+        <file>icon/工程应用.png</file>
+        <file>icon/实验室.png</file>
+        <file>icon/物联网.png</file>
+        <file>icon/学士帽.png</file>
+    </qresource>
+</RCC>

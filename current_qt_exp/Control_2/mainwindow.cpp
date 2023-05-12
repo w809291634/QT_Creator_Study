@@ -1,34 +1,38 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+#include <QtDebug>
+#include <QDockWidget>
+#include <QMdiSubWindow>
+
+#include <QDir>
+#include <QFileInfoList>
+#include <QFileDialog>
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
     initInterface();
     inttControl();
-    CreateMenu();
 }
 
 MainWindow::~MainWindow()
 {
-    delete ui;
-}
 
-/* 初始化控件属性 */
+}
 void MainWindow::initInterface()
 {
-    /* 主窗口默认状态 */
     ui->dockWidget->setVisible(true);
     ui->stackedWidget->setCurrentIndex(0);
     ui->stackedWidget_menu->setCurrentIndex(0);
     ui->stackedWidget_demo->setCurrentIndex(0);
 
-    /* page_widget 子页 */
-    ui->groupBox_demo->setCheckable(true);          // 设置 QGroupBox 带有切换功能
-    ui->groupBox_demo->setChecked(false);           // 设置 QGroupBox 当前没有被激活
-    // page_widget 子页对应的 dockWidget 控制窗口
+    ui->groupBox_demo->setCheckable(true);
+    ui->groupBox_demo->setChecked(false);
+
     QStringList shapelist;
     shapelist<<"NoFrame"<<"Box"<<"Panel"<<"WinPanel"<<"HLine"<<"VLine"<<"StyledPanel";
     ui->cbox_frame_Shape->addItems(shapelist);
@@ -41,7 +45,6 @@ void MainWindow::initInterface()
     alignmentlist<<"AlignLeft"<<"AlignRight"<<"AlignHCenter"<<"AlignJustify";
     ui->cbox_demo_alignment->addItems(alignmentlist);
 
-    /* page_tabWidget 子页 */
     ui->tabWidget->setCurrentIndex(0);
     QStringList list;
     list<<"North"<<"South"<<"West"<<"East";
@@ -51,7 +54,6 @@ void MainWindow::initInterface()
 //    Alignlist<<"AlignLeft"<<"AlignHCenter"<<"AlignRight"<<"AlignTop"<<"AlignVCenter"<<"AlignBottom";
 //    ui->cbox_scrollArea_property->addItems(Alignlist);
 
-    /* page_mdiArea 子页 */
     QStringList layoutlist;
     layoutlist<<"级联展开"<<"平铺展开";
     ui->cbox_mdiArea_layout->addItems(layoutlist);
@@ -59,12 +61,10 @@ void MainWindow::initInterface()
     modelist<<"窗口模式"<<"tab模式";
     ui->cbox_mdiArea_model->addItems(modelist);
 
-    /* page_listWidget 子页 */
     QStringList stylelist;
     stylelist<<"style"<<"style 1"<<"style 2"<<"style 3";
     ui->cbox_listWidget_style->addItems(stylelist);
 
-    /* cbox_tableWidget 子页 */
     QStringList edittriggerlist;
     edittriggerlist<<"NoEditTriggers"<<"CurrentChanged"<<"DoubleClicked"<<"SelectedClicked"<<"EditKeyPressed"<<"AnyKeyPressed"<<"AllEditTriggers";
     ui->cbox_tableWidget_EditTrigger->addItems(edittriggerlist);
@@ -76,167 +76,139 @@ void MainWindow::initInterface()
     QStringList selectionModelist;
     selectionModelist<<"NoSelection"<<"SingleSelection"<<"MultiSelection"<<"ExtendedSelection"<<"ContiguousSelection";
     ui->cbox_tableWidget_SelectionMode->addItems(selectionModelist);
-}
 
-/* 初始化控件控制 */
+}
 void MainWindow::inttControl()
 {
-    QList<QAction*> actionlist = this->findChildren<QAction*>(QString(),Qt::FindDirectChildrenOnly);
+    QList<QAction*> actionlist = this->findChildren<QAction*>();
     foreach(auto action, actionlist)
     {
         connect(action,SIGNAL(triggered()),this,SLOT(on_setCurrentIndex()));
     }
+    CreateMenu();
 }
 
-/* 创建自定义菜单 */
 void MainWindow::CreateMenu()
 {
-    /* 建立一个一级菜单 */
-    QMenu *mainMenu = new QMenu(this);              // 建立一级菜单类，父类为主窗口
+    QMenu *mainMenu = new QMenu(this);
     mainMenu->setTitle("mainMenu");
-
     QAction *action1 = new QAction(mainMenu);
     action1->setObjectName("action1");
     action1->setText("action1");
-
+//    connect(action1,SIGNAL(triggered()),this,SLOT(menu_clicked()));
     QAction *action2 = new QAction(mainMenu);
     action2->setObjectName("action2");
     action2->setText("action2");
-
+//    connect(action2,SIGNAL(triggered()),this,SLOT(menu_clicked()));
     QList<QAction *> actionlist;
     actionlist << action1 << action2;
 
-    /* 建立一个二级菜单 */
-    QMenu *nextMenu = new QMenu(mainMenu);          // 建立二级菜单类，父类为mainMenu
-    nextMenu->setTitle("nextMenu&N");               // 设置快捷键
-
+    QMenu *nextMenu = new QMenu(mainMenu);
+    nextMenu->setTitle("nextMenu&N");
     QAction *action3 = new QAction(nextMenu);
+//    connect(action3,SIGNAL(triggered()),this,SLOT(menu_clicked()));
     action3->setObjectName("action3");
     action3->setText("action3");
-
     QAction *action4 = new QAction(nextMenu);
     action4->setObjectName("action4");
     action4->setText("action4");
-
-    /* 一级菜单添加项目 */
-    mainMenu->addActions(actionlist);
-    mainMenu->addMenu(nextMenu);
-    /* 二级菜单添加项目 */
+//    connect(action4,SIGNAL(triggered()),this,SLOT(menu_clicked()));
     nextMenu->addAction(action3);
     nextMenu->addAction(action4);
-    /* 主窗口添加菜单子项 */
-    ui->menuBar->addMenu(mainMenu);
 
-    /* 设置如上所有action的连接槽函数 */
-    QList<QString> action_name_list;
-    action_name_list << "action1" << "action2" << "action3" << "action4";
+    mainMenu->addActions(actionlist);
+    mainMenu->addMenu(nextMenu);
+
+    ui->menuBar->addMenu(mainMenu);
     QList<QAction*> actionlist_1 = mainMenu->findChildren<QAction*>();
     foreach(auto action, actionlist_1)
     {
-        for(auto name:action_name_list){
+        for(auto name:{"action1","action2","action3","action4"}){
             if(action->objectName()==name){
-//                qDebug()<<action->objectName();
+                qDebug()<<action->objectName();
                 connect(action,SIGNAL(triggered()),this,SLOT(menu_clicked()));
             }
         }
     }
 }
 
-/* 菜单栏的回调函数 */
-void MainWindow::on_setCurrentIndex()
+void MainWindow::menu_clicked()
 {
     QAction* action= qobject_cast<QAction*>(sender());
 
-    /* Widget 菜单 */
-    if(action->objectName()=="actionQWidget")
+    ui->statusBar->showMessage(QString("%1被点击").arg(action->objectName()));
+}
+
+void MainWindow::on_setCurrentIndex()
+{
+    QAction* action= qobject_cast<QAction*>(sender());
+    //QString actionName = QObject::sender()->objectName();
+    //qDebug()<<action->objectName();
+
+    if(action->objectName()=="actionQStackedWidget")
     {
         ui->stackedWidget->setCurrentIndex(0);
         ui->stackedWidget_menu->setCurrentIndex(0);
     }
-    else if(action->objectName()=="actionQScrollArea")
+    else if(action->objectName()=="actionQTabWidget")
     {
         ui->stackedWidget->setCurrentIndex(1);
         ui->stackedWidget_menu->setCurrentIndex(1);
     }
-    else if(action->objectName()=="actionQStackedWidget")
+    else if(action->objectName()=="actionQWidget")
     {
         ui->stackedWidget->setCurrentIndex(2);
         ui->stackedWidget_menu->setCurrentIndex(2);
     }
-    else if(action->objectName()=="actionQTabWidget")
+    else if(action->objectName()=="actionQScrollArea")
     {
         ui->stackedWidget->setCurrentIndex(3);
         ui->stackedWidget_menu->setCurrentIndex(3);
     }
     else if(action->objectName()=="actionQListWidget")
     {
-        ui->stackedWidget->setCurrentIndex(4);
-        ui->stackedWidget_menu->setCurrentIndex(4);
-    }
-    else if(action->objectName()=="actionQTreeWidget")
-    {
         ui->stackedWidget->setCurrentIndex(5);
         ui->stackedWidget_menu->setCurrentIndex(5);
     }
-    else if(action->objectName()=="actionQTableWidget")
+    else if(action->objectName()=="actionQTreeWidget")
     {
         ui->stackedWidget->setCurrentIndex(6);
         ui->stackedWidget_menu->setCurrentIndex(6);
     }
-
-    /* Etc 菜单 */
-    else if(action->objectName()=="actionQDockWidget")
-    {
-        bool visible;
-        visible=!ui->dockWidget->isVisible();       // 获取当前 dockWidget 的显示状态，根据状态取反
-
-        ui->dockWidget->setVisible(visible);
-    }
-    else if(action->objectName()=="actionQMdiArea")
+    else if(action->objectName()=="actionQTableWidget")
     {
         ui->stackedWidget->setCurrentIndex(7);
         ui->stackedWidget_menu->setCurrentIndex(7);
     }
-    else if(action->objectName()=="actionOpenGWidget"){}
-    else if(action->objectName()=="actionQuickWidget"){}
 
-    /* About 菜单 */
-    else if(action->objectName()=="actionAbout_Qt"){
-        QMessageBox::aboutQt(this,"about Qt");
+    else if(action->objectName()=="actionQMdiArea")
+    {
+        ui->stackedWidget->setCurrentIndex(4);
+        ui->stackedWidget_menu->setCurrentIndex(4);
     }
+    else if(action->objectName()=="actionQDockWidget")
+    {
+        static bool visible = true;
+
+        visible=!visible;
+
+        ui->dockWidget->setVisible(visible);
+    }
+    else if(action->objectName()=="actionOpenGWidget");
+    else if(action->objectName()=="actionQuickWidget");
 
     ui->statusBar->showMessage(QString("切换到:%1页").arg(action->text()));
 }
 
-/* 自定义 菜单栏 槽函数 */
-void MainWindow::menu_clicked()
-{
-    QAction* action= qobject_cast<QAction*>(sender());
-    ui->statusBar->showMessage(QString("%1被点击").arg(action->objectName()));
-}
-
 /* page_widget */
-void MainWindow::on_cbox_frame_Shadow_currentIndexChanged(int index)
-{
-    switch(index){
-    case 0:
-        ui->frame->setFrameShadow(QFrame::Shadow::Plain);
-        break;
-    case 1:
-        ui->frame->setFrameShadow(QFrame::Shadow::Raised);
-        break;
-    case 2:
-        ui->frame->setFrameShadow(QFrame::Shadow::Sunken);
-        break;
-    default:
-        qDebug()<<"index error";
-        break;
-    }
-}
-
 void MainWindow::on_cbox_frame_Shape_currentIndexChanged(int index)
 {
     ui->frame->setFrameShape(QFrame::Shape(index));
+}
+
+void MainWindow::on_cbox_frame_Shadow_currentIndexChanged(int index)
+{
+    ui->frame->setFrameShadow(QFrame::Shadow(index));
 }
 
 void MainWindow::on_spinBox_lineWidth_valueChanged(int arg1)
@@ -247,6 +219,11 @@ void MainWindow::on_spinBox_lineWidth_valueChanged(int arg1)
 void MainWindow::on_spinBox_midLineWidth_valueChanged(int arg1)
 {
     ui->frame->setMidLineWidth(arg1);
+}
+
+void MainWindow::on_checkBox_demo_clicked(bool checked)
+{
+    ui->groupBox_demo->setChecked(checked);
 }
 
 void MainWindow::on_cbox_demo_alignment_currentIndexChanged(int index)
@@ -263,124 +240,158 @@ void MainWindow::on_cbox_demo_alignment_currentIndexChanged(int index)
     }
 }
 
-void MainWindow::on_checkBox_demo_clicked(bool checked)
-{
-    ui->groupBox_demo->setChecked(checked);
-}
-
 void MainWindow::on_checkBox_demo_flat_clicked(bool checked)
 {
+    qDebug()<<ui->groupBox_demo->isFlat();
     ui->groupBox_demo->setFlat(checked);
 }
 
 /* stackedWidget */
-void MainWindow::on_btn_stackedWidget_delete_clicked()
-{
-    ui->stackedWidget_demo->removeWidget(ui->stackedWidget_demo->currentWidget());
-}
-
-void MainWindow::on_btn_stackedWidget_insert_clicked()
-{
-    QLabel *label=new QLabel();
-    label->setText(QString("page%1").arg(ui->stackedWidget_demo->count()+1));
-    label->setAlignment(Qt::AlignCenter);
-    ui->stackedWidget_demo->addWidget(label);
-    ui->stackedWidget_demo->setCurrentIndex(ui->stackedWidget_demo->indexOf(label));    // 切换到
-}
-
 void MainWindow::on_btn_stackedWidget_toggle_clicked()
 {
     int page=ui->stackedWidget_demo->currentIndex();
     if(++page>=ui->stackedWidget_demo->count())
         page=0;
+
     ui->stackedWidget_demo->setCurrentIndex(page);
 }
 
-/* tabWidget */
-void MainWindow::on_btn_tabWidget_delete_clicked()
-{
-    ui->tabWidget->removeTab(ui->tabWidget->currentIndex());
-}
-
-void MainWindow::on_btn_tabWidget_insert_clicked()
+void MainWindow::on_btn_stackedWidget_insert_clicked()
 {
     QLabel *label= new QLabel();
-    QString str=QString("Tab %1").arg(ui->tabWidget->count()+1);
-    label->setText(str);
+    label->setText(QString("page%1").arg(ui->stackedWidget_demo->count()+1));
     label->setAlignment(Qt::AlignCenter);
-    ui->tabWidget->addTab(label,str);
-    ui->tabWidget->setCurrentIndex(ui->tabWidget->indexOf(label));
+    ui->stackedWidget_demo->addWidget(label);
+    ui->stackedWidget_demo->setCurrentIndex(ui->stackedWidget_demo->indexOf(label));
 }
 
+void MainWindow::on_btn_stackedWidget_delete_clicked()
+{
+    ui->stackedWidget_demo->removeWidget(ui->stackedWidget_demo->currentWidget());
+}
+
+/* tabWidget */
 void MainWindow::on_btn_tabWidget_toggle_clicked()
 {
     int page=ui->tabWidget->currentIndex();
+
     if(++page>=ui->tabWidget->count())
         page=0;
 
     ui->tabWidget->setCurrentIndex(page);
 }
 
+void MainWindow::on_btn_tabWidget_insert_clicked()
+{
+    QLabel *label= new QLabel();
+    QString str(QString("Tab%1").arg(ui->tabWidget->count()+1));
+    label->setText(str);
+    label->setAlignment(Qt::AlignCenter);
+    ui->tabWidget->addTab(label,str);
+    ui->tabWidget->setCurrentIndex(ui->tabWidget->indexOf(label));
+}
+
+void MainWindow::on_btn_tabWidget_delete_clicked()
+{
+    ui->tabWidget->removeTab(ui->tabWidget->currentIndex());
+}
+
 void MainWindow::on_cbox_tabWidget_currentIndexChanged(int index)
 {
-    ui->tabWidget->setTabPosition(QTabWidget::TabPosition(index));
+    ui->tabWidget->setTabPosition((QTabWidget::TabPosition)index);
 }
+
+//void MainWindow::on_cbox_scrollArea_property_currentIndexChanged(int index)
+//{
+//    switch (index) {
+//    case 0:
+//        ui->scrollArea->setAlignment(Qt::AlignLeft);
+//        break;
+//    case 1:
+//        ui->scrollArea->setAlignment(Qt::AlignHCenter);
+//        break;
+//    case 2:
+//        ui->scrollArea->setAlignment(Qt::AlignRight);
+//        break;
+//    case 3:
+//        ui->scrollArea->setAlignment(Qt::AlignTop);
+//        break;
+//    case 4:
+//        ui->scrollArea->setAlignment(Qt::AlignVCenter);
+//        break;
+//    case 5:
+//        ui->scrollArea->setAlignment(Qt::AlignBottom);
+//        break;
+//    default:
+//        ui->scrollArea->setAlignment(Qt::AlignLeft|Qt::AlignLeft);
+//        break;
+//    }
+//}
 
 /* listWidget */
 void MainWindow::on_btn_listWidget_add_clicked()
 {
     QListWidgetItem *item=new QListWidgetItem();
+
     item->setText(QString("当前列:%1").arg(ui->listWidget->count()));
-    if(ui->cbox_listWidget_style->currentText()=="style 1"){
-        item->setIcon(QIcon(":/icon/icon/产学.png"));
+    if(ui->cbox_listWidget_style->currentText()=="style 1")
+    {
+        item->setIcon(QIcon(":/images/backlight/ic_hand_30.png"));
     }
-    else if(ui->cbox_listWidget_style->currentText()=="style 2"){
-        item->setIcon(QIcon(":/icon/icon/创新.png"));
+    else if((ui->cbox_listWidget_style->currentText()=="style 2"))
+    {
         item->setCheckState(Qt::Unchecked);
     }
-    else if(ui->cbox_listWidget_style->currentText()=="style 3"){
-        item->setIcon(QIcon(":/icon/icon/学士帽.png"));
+    else if((ui->cbox_listWidget_style->currentText()=="style 3"))
+    {
+        item->setIcon(QIcon(":/images/rgblight/ic_handle.png"));
         item->setCheckState(Qt::Checked);
     }
+
     if (ui->cbox_edit->isChecked())
         item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEditable |Qt::ItemIsUserCheckable |Qt::ItemIsEnabled);
     else
         item->setFlags(Qt::ItemIsSelectable |Qt::ItemIsUserCheckable |Qt::ItemIsEnabled);
+
     ui->listWidget->addItem(item);
 }
-
 void MainWindow::on_btn_listWidget_insert_clicked()
 {
     QListWidgetItem *item=new QListWidgetItem();
+
     item->setText(QString("当前列:%1").arg(ui->listWidget->count()));
-    if(ui->cbox_listWidget_style->currentText()=="style 1"){
-        item->setIcon(QIcon(":/icon/icon/产学.png"));
+    if(ui->cbox_listWidget_style->currentText()=="style 1")
+    {
+        item->setIcon(QIcon(":/images/backlight/ic_hand_30.png"));
     }
-    else if(ui->cbox_listWidget_style->currentText()=="style 2"){
-        item->setIcon(QIcon(":/icon/icon/创新.png"));
+    else if((ui->cbox_listWidget_style->currentText()=="style 2"))
+    {
         item->setCheckState(Qt::Unchecked);
     }
-    else if(ui->cbox_listWidget_style->currentText()=="style 3"){
-        item->setIcon(QIcon(":/icon/icon/学士帽.png"));
+    else if((ui->cbox_listWidget_style->currentText()=="style 3"))
+    {
+        item->setIcon(QIcon(":/images/rgblight/ic_handle.png"));
         item->setCheckState(Qt::Checked);
     }
+
     if (ui->cbox_edit->isChecked())
         item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEditable |Qt::ItemIsUserCheckable |Qt::ItemIsEnabled);
     else
         item->setFlags(Qt::ItemIsSelectable |Qt::ItemIsUserCheckable |Qt::ItemIsEnabled);
 
-    ui->listWidget->insertItem(ui->listWidget->currentRow(),item);
-}
 
-void MainWindow::on_btn_listWidget_clear_clicked()
-{
-    ui->listWidget->clear();
+    ui->listWidget->insertItem(ui->listWidget->currentRow(),item);
 }
 
 void MainWindow::on_btn_listWidget_delete_clicked()
 {
     QListWidgetItem* item=ui->listWidget->takeItem(ui->listWidget->currentRow());
     delete item;
+}
+
+void MainWindow::on_btn_listWidget_clear_clicked()
+{
+    ui->listWidget->clear();
 }
 
 /* treeWidget */
@@ -419,6 +430,7 @@ QFileInfoList MainWindow::searchFile(QTreeWidgetItem *root,QString path)
 
     QFileInfoList fileListCur=dir.entryInfoList(QDir::Files | QDir::Hidden | QDir::NoSymLinks);
     QFileInfoList folderList = dir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
+
 
     //当前目录的dir
     foreach(auto folder, folderList)
@@ -510,16 +522,7 @@ void MainWindow::on_cbox_table_title_clicked(bool checked)
 
 void MainWindow::on_cbox_tableWidget_EditTrigger_currentIndexChanged(int index)
 {
-    switch(index){
-    case 0:ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);break;
-    case 1:ui->tableWidget->setEditTriggers(QAbstractItemView::CurrentChanged);break;
-    case 2:ui->tableWidget->setEditTriggers(QAbstractItemView::DoubleClicked);break;
-    case 3:ui->tableWidget->setEditTriggers(QAbstractItemView::SelectedClicked);break;
-    case 4:ui->tableWidget->setEditTriggers(QAbstractItemView::EditKeyPressed);break;
-    case 5:ui->tableWidget->setEditTriggers(QAbstractItemView::AnyKeyPressed);break;
-    case 6:ui->tableWidget->setEditTriggers(QAbstractItemView::AllEditTriggers);break;
-    default:qDebug()<<"index error";break;
-    }
+    ui->tableWidget->setEditTriggers(QAbstractItemView::EditTrigger(index));
 }
 
 void MainWindow::on_cbox_tableWidget_SelectionBehavior_currentIndexChanged(int index)
@@ -546,7 +549,7 @@ void MainWindow::on_tableWidget_itemClicked(QTableWidgetItem *item)
 /* mdiArea */
 void MainWindow::on_btn_mdiArea_add_clicked()
 {
-    QLabel* label=new QLabel();
+    QLabel *label= new QLabel(this);
     QString str(QString("subwindow %1").arg(ui->mdiArea->subWindowList().count()));
     label->setObjectName(str);
     label->setWindowTitle(str);
@@ -588,7 +591,6 @@ void MainWindow::on_cbox_mdiArea_model_currentIndexChanged(int index)
 
 void MainWindow::on_mdiArea_subWindowActivated(QMdiSubWindow *arg1)
 {
-    (void)arg1;
     if (ui->mdiArea->subWindowList().count()==0)
         ui->statusBar->showMessage("所有窗口均被关闭");
     else
