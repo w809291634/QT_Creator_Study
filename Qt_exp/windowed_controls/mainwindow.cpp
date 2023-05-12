@@ -332,14 +332,14 @@ void MainWindow::on_btn_listWidget_add_clicked()
     QListWidgetItem *item=new QListWidgetItem();
     item->setText(QString("当前列:%1").arg(ui->listWidget->count()));
     if(ui->cbox_listWidget_style->currentText()=="style 1"){
-        item->setIcon(QIcon(":/icon/icon/产学.png"));
+        item->setIcon(QIcon(":/icon/icon/Industry_and_academia.png"));
     }
     else if(ui->cbox_listWidget_style->currentText()=="style 2"){
-        item->setIcon(QIcon(":/icon/icon/创新.png"));
+        item->setIcon(QIcon(":/icon/icon/innovate.png"));
         item->setCheckState(Qt::Unchecked);
     }
     else if(ui->cbox_listWidget_style->currentText()=="style 3"){
-        item->setIcon(QIcon(":/icon/icon/学士帽.png"));
+        item->setIcon(QIcon(":/icon/icon/mortarboard.png"));
         item->setCheckState(Qt::Checked);
     }
     if (ui->cbox_edit->isChecked())
@@ -388,7 +388,7 @@ void MainWindow::on_btn_treeWidget_path_clicked()
 {
     QString curPath=QDir::currentPath();
     QString dlgTitle="选择文件夹";
-    QString rootpath = QFileDialog::getExistingDirectory(this,dlgTitle,curPath);
+    QString rootpath = QFileDialog::getExistingDirectory(this,dlgTitle,curPath);        // 打开文件对话框，选择一个文件路径
     if (rootpath.isEmpty())
         return;
 
@@ -404,6 +404,7 @@ QFileInfoList MainWindow::searchFile(QTreeWidgetItem *root,QString path)
 {
     QDir dir(path);
     QDir file(path);
+
     file.setFilter(QDir::Files | QDir::Hidden | QDir::NoSymLinks);
     file.setSorting(QDir::Size | QDir::Reversed);
     QFileInfoList fileList = file.entryInfoList();
