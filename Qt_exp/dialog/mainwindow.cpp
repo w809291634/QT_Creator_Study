@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+#include <QDebug>
 #include <QDir>
 #include <QFileDialog>
 #include <QTextStream>
@@ -20,20 +21,21 @@ MainWindow::~MainWindow()
 }
 
 void MainWindow::on_btn_openFile_clicked(){
-    QString curPath=QDir::currentPath();//获取应用程序的路径
-    QString dlgTitle="选择文件"; //对话框标题
+    QString curPath=QDir::currentPath();            //获取应用程序的路径
+    QString dlgTitle="选择文件";                    //对话框标题
     QString filter="文本文件(*.txt);;图片文件(*.jpg *.gif *.png);;所有文件(*.*)"; //文件过滤器
-    QString fileName=QFileDialog::getOpenFileName(this,dlgTitle,curPath,filter);
-    if (fileName.isEmpty())
+    QString filePath=QFileDialog::getOpenFileName(this,dlgTitle,curPath,filter);
+//    qDebug()<<filePath;
+    if (filePath.isEmpty())
         return;
 
-    QFile file(fileName);
+    QFile file(filePath);
     if(!file.open(QIODevice::ReadOnly | QIODevice::Text))
     {
         ui->statusBar->showMessage("打开文件失败");
         return;
     }
-    ui->statusBar->showMessage("打开文件:"+fileName);
+    ui->statusBar->showMessage("打开文件:"+filePath);
 
     QTextStream in(&file);
     ui->textEdit->clear();
