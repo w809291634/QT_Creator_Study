@@ -7,7 +7,7 @@
 /* 控件 */
 5、basic_controls				// QT中界面的基础控件			OK
 								// QPushButton、QToolButton、QRadioButton、QCheckBox、QLineEdit等等QCheckBox和QButtonGroup、QTime类和QTimeEdit、QToolBar和QAction
-6、windowed_controls			// QT中界面的窗口控件
+6、windowed_controls			// QT中界面的窗口控件  			OK
 7、Dialog						// QT中界面的对话框控件
 
 
@@ -22,4 +22,11 @@
 12、QTcpSocket					// QTcpSocket和QTcpServer进行TCP编程、使用QUdpSocket的UDP
 13、HTTP协议、基于服务器端/客户端的聊天示例
 
+
+
+待修订问题：
+1、basic_controls 中的图片中文问题
+2、
+3、
+4、
 
