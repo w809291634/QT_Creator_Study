@@ -10,15 +10,15 @@ class BaseTitleBar: public QWidget
 {
     Q_OBJECT
 public:
-    BaseTitleBar(QWidget *parent = nullptr);
-    ~BaseTitleBar() override;
-
     enum ButtonType
     {
         MIN_BUTTON = 0,			// 最小化和关闭按钮;
         MIN_MAX_BUTTON ,		// 最小化、最大化和关闭按钮;
         ONLY_CLOSE_BUTTON		// 只有关闭按钮;
     };
+
+    BaseTitleBar(QWidget *parent = nullptr,ButtonType b_type=MIN_MAX_BUTTON,QString StyleSheet_Path=":/ + MyTitle + .css");
+    ~BaseTitleBar() override;
 
     // 设置标题栏背景色;
     void setBackgroundColor(int r, int g, int b);
@@ -62,7 +62,7 @@ private:
 
     void initControl();             // 初始化控件
     void initConnections();         // 信号槽的绑定
-    void loadStyleSheet(const QString &sheetName);  // 加载样式文件
+    void loadStyleSheet(const QString &sheetPath);  // 加载样式文件
 
     /* 变量 */
     QLabel* m_pIcon;					// 标题栏图标;
@@ -72,15 +72,15 @@ private:
     QPushButton* m_pButtonMax;			// 最大化按钮;
     QPushButton* m_pButtonClose;		// 关闭按钮;
     // 标题栏背景色;
-    int m_colorR;
-    int m_colorG;
-    int m_colorB;
+    int m_colorR=153;
+    int m_colorG=153;
+    int m_colorB=153;
 
     // 最大化，最小化变量;
     QPoint m_restorePos;
     QSize m_restoreSize;
     // 移动窗口的变量;
-    bool m_isPressed;
+    bool m_isPressed=false;
     QPoint m_startMovePos;
     // 标题栏跑马灯效果时钟;
     QTimer m_titleRollTimer;

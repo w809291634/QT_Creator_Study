@@ -21,8 +21,8 @@ private:
 	void initTitleBar();
 	void paintEvent(QPaintEvent *event);
 	void loadStyleSheet(const QString &sheetName);
-    Ui::CustomMainWindow *ui;
     BaseTitleBar* m_titleBar;
+    Ui::CustomMainWindow *ui;
 
 private slots:
 	void onButtonMinClicked();

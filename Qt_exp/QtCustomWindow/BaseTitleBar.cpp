@@ -17,7 +17,6 @@ BaseTitleBar::BaseTitleBar(QWidget *parent)
 	, m_isPressed(false)
 	, m_buttonType(MIN_MAX_BUTTON)
 {
-	// 初始化;
 	initControl();
 	initConnections();
     loadStyleSheet("MyTitle");

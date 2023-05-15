@@ -8,16 +8,13 @@
 #define BUTTON_WIDTH 30			// 按钮宽度;
 #define TITLE_HEIGHT 30			// 标题栏高度;
 
-BaseTitleBar::BaseTitleBar(QWidget *parent):
+BaseTitleBar::BaseTitleBar(QWidget *parent,ButtonType b_type,QString StyleSheet_Path):
     QWidget(parent)
-  , m_colorR(153)
-  , m_colorG(153)
-  , m_colorB(153)
-  , m_isPressed(false)
-  , m_buttonType(MIN_MAX_BUTTON)
+  , m_buttonType(b_type)
 {
-    initControl();
-    initConnections();
+    initControl();                                  // 初始化控制
+    initConnections();                              // 初始化连接
+    loadStyleSheet(StyleSheet_Path);                // 加载样式表
 }
 
 BaseTitleBar::~BaseTitleBar(){}
@@ -243,9 +240,9 @@ void BaseTitleBar::mouseReleaseEvent(QMouseEvent *event)
 
 // 加载本地样式文件;
 // 可以将样式直接写在文件中，程序运行时直接加载进来;
-void BaseTitleBar::loadStyleSheet(const QString &sheetName)
+void BaseTitleBar::loadStyleSheet(const QString &sheetPath)
 {
-    QFile file(":/" + sheetName + ".css");
+    QFile file(sheetPath);
     file.open(QFile::ReadOnly);
     if (file.isOpen())
     {
