@@ -1,5 +1,4 @@
 #include "mywidget.h"
-//#include "skin.h"
 
 #include <QPainter>
 #include <QVBoxLayout>

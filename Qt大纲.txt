@@ -8,10 +8,10 @@
 5、basic_controls				// QT中界面的基础控件			OK
 								// QPushButton、QToolButton、QRadioButton、QCheckBox、QLineEdit等等QCheckBox和QButtonGroup、QTime类和QTimeEdit、QToolBar和QAction
 6、windowed_controls			// QT中界面的窗口控件  			OK
-7、Dialog						// QT中界面的对话框控件
+7、Dialog						// QT中界面的对话框控件          OK
 
 
-8、Custom						// 自定义控件\自定义窗口\自定义对话框
+8、Custom						// 自定义控件\自定义窗口\自定义对话框       自定义窗口 OK  自定义控件
 /* 线程和进程 */
 9、Threads						// 线程
 10、Ipc							// 进程
