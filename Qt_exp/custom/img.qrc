@@ -1,0 +1,10 @@
+<RCC>
+    <qresource prefix="/">
+        <file>MyTitle/close.png</file>
+        <file>MyTitle/max.png</file>
+        <file>MyTitle/min.png</file>
+        <file>MyTitle/restore.png</file>
+        <file>MyTitle.css</file>
+        <file>icon/logo100.png</file>
+    </qresource>
+</RCC>

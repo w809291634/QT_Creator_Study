@@ -17,7 +17,7 @@ public:
         ONLY_CLOSE_BUTTON		// 只有关闭按钮;
     };
 
-    BaseTitleBar(QWidget *parent = nullptr,ButtonType b_type=MIN_MAX_BUTTON,QString StyleSheet_Path=":/ + MyTitle + .css");
+    BaseTitleBar(QWidget *parent = nullptr,QString StyleSheet_Path=":/ + MyTitle + .css",ButtonType b_type=MIN_MAX_BUTTON);
     ~BaseTitleBar() override;
 
     // 设置标题栏背景色;

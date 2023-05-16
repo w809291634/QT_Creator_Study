@@ -8,7 +8,7 @@
 #define BUTTON_WIDTH 30			// 按钮宽度;
 #define TITLE_HEIGHT 30			// 标题栏高度;
 
-BaseTitleBar::BaseTitleBar(QWidget *parent,ButtonType b_type,QString StyleSheet_Path):
+BaseTitleBar::BaseTitleBar(QWidget *parent,QString StyleSheet_Path,ButtonType b_type):
     QWidget(parent)
   , m_buttonType(b_type)
 {
@@ -91,6 +91,7 @@ void BaseTitleBar::setTitleIcon(QString filePath)
 // 设置标题内容;
 void BaseTitleBar::setTitleContent(QString titleContent)
 {
+//    m_pTitleContent->setStyleSheet("color:red;");
     m_pTitleContent->setText(titleContent);
     m_titleContent = titleContent;
 }
