@@ -13,7 +13,24 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
+  <widget class="MyBattery" name="myBattery">
+   <property name="geometry">
+    <rect>
+     <x>100</x>
+     <y>130</y>
+     <width>101</width>
+     <height>31</height>
+    </rect>
+   </property>
+  </widget>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>MyBattery</class>
+   <extends>QWidget</extends>
+   <header>mybattery.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>
