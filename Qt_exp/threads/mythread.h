@@ -11,12 +11,12 @@ public:
     ~MyThread();
 
     void set_callback(void (*cb)(void));
-    void (*callback)(void)=nullptr;
+
 signals:
     void MsgSignal(const QString& msg);
 
 protected:
-
+    void (*callback)(void)=nullptr;
     virtual void run();
 };
 

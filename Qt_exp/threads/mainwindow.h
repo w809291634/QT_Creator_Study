@@ -23,8 +23,16 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+
+private slots:
+    void on_QSemaphore_btn_clicked(bool checked);
+    void update_QSemaphore_bar(const QString& msg);
+
 private:
     Ui::MainWindow *ui;
 };
+
+void app_main(MainWindow* instance);
+extern MainWindow* _main_win;
 
 #endif // MAINWINDOW_H
