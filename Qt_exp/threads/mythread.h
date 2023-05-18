@@ -2,6 +2,7 @@
 #define MYTHREAD_H
 
 #include <QThread>
+#include <QtCore>
 
 class MyThread : public QThread
 {
@@ -14,7 +15,9 @@ public:
 
 signals:
     void MsgSignal(const QString& msg);
-
+    void MsgSignal(const QString& act,
+                   const QString& cnt1,
+                   const QString& cnt2);
 protected:
     void (*callback)(void)=nullptr;
     virtual void run();

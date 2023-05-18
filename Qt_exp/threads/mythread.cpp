@@ -8,7 +8,7 @@ MyThread::MyThread(QObject * parent):
 
 MyThread::~MyThread()
 {
-
+    qDebug()<<QString("%1 exit").arg(this->objectName());
 }
 
 void MyThread::run(){
