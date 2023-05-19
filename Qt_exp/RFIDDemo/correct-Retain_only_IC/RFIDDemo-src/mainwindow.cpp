@@ -1,4 +1,4 @@
-/*********************************************************************************************
+﻿/*********************************************************************************************
 *
 *********************************************************************************************/
 
@@ -109,41 +109,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->IC_radioButton_Out->setEnabled(false);
     ui->IC_pushButton_Pass_oK->setEnabled(false);
 
-    //ETC
-    ui->ETC_pushButton_Look->setEnabled(false);
-    ui->ETC_pushButton_Money_Save->setEnabled(false);
-    ui->ETC_pushButton_OFF->setEnabled(false);
-    ui->ETC_pushButton_ON->setEnabled(false);
-    ui->ETC_pushButton_Open->setEnabled(false);
-    ui->ETC_pushButton_Read->setEnabled(false);
-    ui->ETC_pushButton_Up->setEnabled(false);
-    ui->ETC_pushButton_Write->setEnabled(false);
-    ui->ETC_pushButton_one->setEnabled(false);
-
-    ui->ETC_pushButton_RF_Set->setEnabled(false);
-    ui->ETC_pushButton_RF_Get->setEnabled(false);
-    ui->ETC_pushButton_TxLv_Set->setEnabled(false);
-    ui->ETC_pushButton_TxLv_Get->setEnabled(false);
-    ui->ETC_pushButton_RSSI_Get->setEnabled(false);
-    ui->ETC_pushButton_Region_Get->setEnabled(false);
-    ui->ETC_pushButton_Region_Set->setEnabled(false);
-
-    ui->ETC_pushButton_A_Up_Money->setEnabled(false);
-    ui->ETC_pushButton_A_Down_Money->setEnabled(false);
-
-    ui->ETC_radioButton_App_Down->setEnabled(false);
-    ui->ETC_radioButton_App_Up->setEnabled(false);
-
-    ui->G_pushButton_Read->setEnabled(false);
-    ui->G_pushButton_ReadData->setEnabled(false);
-    ui->G_pushButton_WriteData->setEnabled(false);
-    ui->G_pushButton_Write->setEnabled(false);
-    ui->G_pushButton_ReadRead->setEnabled(false);
-    ui->G_pushButton_ReadWrite->setEnabled(false);
-    ui->G_pushButton_Readlabel->setEnabled(false);
-    ui->G_pushButton_WriteLabel->setEnabled(false);
-    ui->G_pushButton_LookCard->setEnabled(false);
-
     //获取当前设置的初始化时间
     Time_Morn_Up_Last = ui->ID_timeEdit_Morn_Up->time();
     Time_Morn_Down_Last = ui->ID_timeEdit_Morn_Down->time();
@@ -175,15 +140,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->IC_lineEdit_Sys_Write->setValidator(new QRegExpValidator(Regexp_Sys,ui->IC_lineEdit_Sys_Write));
     ui->IC_lineEdit_Pass->setValidator(new QRegExpValidator(Regexp_Pass,ui->IC_lineEdit_Pass));
     ui->ID_lineEdit_Write->setValidator(new QRegExpValidator(Regexp_Num_Card,ui->ID_lineEdit_Write));
-    ui->ETC_lineEdit_TxLv->setValidator(new QRegExpValidator(Regexp_ETC_TxL,ui->ETC_lineEdit_TxLv));
-    ui->ETC_lineEdit_Start_Add->setValidator(new QRegExpValidator(Regexp_ETC_App,ui->ETC_lineEdit_Start_Add));
-    ui->ETC_lineEdit_Write_Add->setValidator(new QRegExpValidator(Regexp_ETC_App,ui->ETC_lineEdit_Write_Add));
-    ui->ETC_lineEdit_ReadLength->setValidator(new QRegExpValidator(Regexp_ETC_App,ui->ETC_lineEdit_ReadLength));
-    ui->ETC_lineEdit_WriteData->setValidator(new QRegExpValidator(ETC_Regexp_Write_RFU,ui->ETC_lineEdit_WriteData));
-    ui->G_lineEdit_Panid->setValidator(new QRegExpValidator(G_Regexp_Panid, ui->G_lineEdit_Panid));
-    ui->G_lineEdit_ReadPanid->setValidator(new QRegExpValidator(G_Regexp_Panid, ui->G_lineEdit_ReadPanid));
-    ui->G_lineEdit_WriteData->setValidator(new QRegExpValidator(G_Regexp_Write, ui->G_lineEdit_WriteData));
-    ui->G_lineEdit_Write->setValidator(new QRegExpValidator(G_Regexp_Write, ui->G_lineEdit_Write));
 
     //表格
     model_ID->setColumnCount(2);
@@ -200,17 +156,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->ID_tableView_Data->setEditTriggers(QAbstractItemView::NoEditTriggers);//禁止编辑
     ui->ID_tableView_Data->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
     ui->ID_tableView_Data->setModel(model_Data);
-
-    ui->G_tableWidget_App_In->setColumnCount(4);
-    ui->G_tableWidget_App_In->setHorizontalHeaderLabels(QStringList()<<" 卡 号 "<<"货物编号"<<"货物数量"<<" 操 作 ");
-    ui->G_tableWidget_App_In->resizeColumnsToContents();  //表格大小自动变换
-    ui->G_tableWidget_App_In->resizeRowsToContents();
-
-    ui->G_tableWidget_Storage->setColumnCount(4);
-    ui->G_tableWidget_Storage->setHorizontalHeaderLabels(QStringList()<<" 卡 号 "<<"货物编号"<<"货物数量"<<" 状 态 ");
-    ui->G_tableWidget_Storage->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    ui->G_tableWidget_Storage->resizeColumnsToContents();  //表格大小自动变换
-    ui->G_tableWidget_Storage->resizeRowsToContents();
 
     Get_Com();
     Get_Time();
@@ -330,23 +275,7 @@ void MainWindow::Get_Time()
         }
     }
     ETC_FreeTime++;
-    if(Mode == 4 && G_Mode)
-    {
-        for(int a=0; a<ui->G_tableWidget_App_In->rowCount(); a++)
-        {
-            if(G_Mess_Time[a] > 0)
-                G_Mess_Time[a]--;
-            if(G_Mess_Ok[a] == 0)
-            {
-                if(G_Mess_Time[a] <= 0)
-                {
-                    ui->G_tableWidget_Storage->item(a, 3)->setText("丢失");
-                    ui->G_tableWidget_Storage->item(a, 3)->setForeground(QBrush(QColor(255, 0, 0)));
-                    G_Mess_Ok[a] = 1;
-                }
-            }
-        }
-    }
+
     if(ETC_FreeTime >= 15)
     {
         ETC_FreeTime = 0;
@@ -361,12 +290,6 @@ void MainWindow::Get_Time()
         ui->IC_label_Pass_State->setText("");
         ui->IC_label_Data_State->setText("");
         ui->ID_label_State->setText("");
-        ui->ETC_label_Region_State->setText("");
-        ui->ETC_label_RF_State->setText("");
-        ui->ETC_label_TxLv_State->setText("");
-        ui->ETC_label_Data_State->setText("");
-        ui->G_label_State->setText("");
-        ui->G_label_LabelState->setText("");
     }
     else
     {
@@ -476,44 +399,7 @@ void MainWindow::OpenUart_Clicked()
             ui->IC_radioButton_In->setEnabled(false);
             ui->IC_radioButton_Out->setEnabled(false);
             ui->IC_pushButton_Pass_oK->setEnabled(false);
-            //ETC
-            ui->ETC_pushButton_Look->setEnabled(false);
-            ui->ETC_pushButton_Money_Save->setEnabled(false);
-            ui->ETC_pushButton_OFF->setEnabled(false);
-            ui->ETC_pushButton_ON->setEnabled(false);
-            ui->ETC_pushButton_Open->setEnabled(false);
-            ui->ETC_pushButton_Read->setEnabled(false);
-            ui->ETC_pushButton_Up->setEnabled(false);
-            ui->ETC_pushButton_Write->setEnabled(false);
-            ui->ETC_pushButton_one->setEnabled(false);
 
-            ui->ETC_pushButton_RF_Set->setEnabled(false);
-            ui->ETC_pushButton_RF_Get->setEnabled(false);
-            ui->ETC_pushButton_TxLv_Set->setEnabled(false);
-            ui->ETC_pushButton_TxLv_Get->setEnabled(false);
-            ui->ETC_pushButton_RSSI_Get->setEnabled(false);
-            ui->ETC_pushButton_Region_Get->setEnabled(false);
-            ui->ETC_pushButton_Region_Set->setEnabled(false);
-
-            ui->ETC_pushButton_A_Up_Money->setEnabled(false);
-            ui->ETC_pushButton_A_Down_Money->setEnabled(false);
-
-            ui->ETC_radioButton_App_Down->setEnabled(false);
-            ui->ETC_radioButton_App_Up->setEnabled(false);
-
-            ui->G_pushButton_Read->setEnabled(false);
-            ui->G_pushButton_ReadData->setEnabled(false);
-            ui->G_pushButton_WriteData->setEnabled(false);
-            ui->G_pushButton_Write->setEnabled(false);
-            ui->G_pushButton_ReadRead->setEnabled(false);
-            ui->G_pushButton_ReadWrite->setEnabled(false);
-            ui->G_pushButton_Readlabel->setEnabled(false);
-            ui->G_pushButton_WriteLabel->setEnabled(false);
-            ui->G_pushButton_LookCard->setEnabled(false);
-
-            ui->G_lineEdit_Mac->clear();
-            ui->G_lineEdit_Panid->clear();
-            ui->G_lineEdit_ReadPanid->clear();
 
         }
     }
@@ -575,52 +461,10 @@ void MainWindow::OpenUart_Clicked()
                 ui->IC_pushButton_App_Up_Money->setEnabled(true);
             else
                 ui->IC_pushButton_App_Up_Money->setEnabled(false);
-            /* ETC */
-            ui->ETC_pushButton_Look->setEnabled(true);
-            ui->ETC_pushButton_Money_Save->setEnabled(true);
 
-            ui->ETC_pushButton_Read->setEnabled(true);
-            ui->ETC_pushButton_one->setEnabled(true);
-            if(ETC_App_Mode)
-            {
-                ui->ETC_pushButton_Up->setEnabled(true);
-                ui->ETC_pushButton_OFF->setEnabled(false);
-                ui->ETC_pushButton_ON->setEnabled(false);
-                ui->ETC_pushButton_Open->setEnabled(false);
-            }
-            else
-            {
-                ui->ETC_pushButton_Up->setEnabled(false);
-                ui->ETC_pushButton_OFF->setEnabled(false);
-                ui->ETC_pushButton_ON->setEnabled(true);
-                ui->ETC_pushButton_Open->setEnabled(true);
-            }
 
             ETC_Momery_Change();
 
-            ui->ETC_pushButton_RF_Set->setEnabled(true);
-            ui->ETC_pushButton_RF_Get->setEnabled(true);
-            ui->ETC_pushButton_TxLv_Set->setEnabled(true);
-            ui->ETC_pushButton_TxLv_Get->setEnabled(true);
-            ui->ETC_pushButton_RSSI_Get->setEnabled(true);
-            ui->ETC_pushButton_Region_Get->setEnabled(true);
-            ui->ETC_pushButton_Region_Set->setEnabled(true);
-
-            ui->ETC_pushButton_A_Up_Money->setEnabled(true);
-            ui->ETC_pushButton_A_Down_Money->setEnabled(true);
-
-            ui->ETC_radioButton_App_Down->setEnabled(true);
-            ui->ETC_radioButton_App_Up->setEnabled(true);
-
-            ui->G_pushButton_Read->setEnabled(true);
-            ui->G_pushButton_ReadData->setEnabled(true);
-            ui->G_pushButton_WriteData->setEnabled(true);
-            ui->G_pushButton_Write->setEnabled(true);
-            ui->G_pushButton_ReadRead->setEnabled(true);
-            ui->G_pushButton_ReadWrite->setEnabled(true);
-            ui->G_pushButton_Readlabel->setEnabled(true);
-            ui->G_pushButton_WriteLabel->setEnabled(true);
-            ui->G_pushButton_LookCard->setEnabled(true);
         }
         else
         {
@@ -719,8 +563,6 @@ void MainWindow::Change_ID()
         OpenUart_Clicked();
     ui->pushButton_IDMode->setEnabled(false);
     ui->pushButton_ICMode->setEnabled(true);
-    ui->pushButton_ETCMode->setEnabled(true);
-    ui->pushButton_ZigBeeMode->setEnabled(true);
     if(!ID_New_Mode)
         ui->comboBox_Baud->setCurrentIndex(7);
     else
@@ -754,8 +596,6 @@ void MainWindow::Change_IC()
     Mode_Change();
     ui->pushButton_ICMode->setEnabled(false);
     ui->pushButton_IDMode->setEnabled(true);
-    ui->pushButton_ETCMode->setEnabled(true);
-    ui->pushButton_ZigBeeMode->setEnabled(true);
 
     ui->stackedWidget->setCurrentIndex(1);//界面切换
 
@@ -778,8 +618,6 @@ void MainWindow::Change_ETC()
         OpenUart_Clicked();
     ui->pushButton_ICMode->setEnabled(true);
     ui->pushButton_IDMode->setEnabled(true);
-    ui->pushButton_ETCMode->setEnabled(false);
-    ui->pushButton_ZigBeeMode->setEnabled(true);
 
     ui->stackedWidget->setCurrentIndex(2);//界面切换
     ETC_Change_Mode();
@@ -807,8 +645,6 @@ void MainWindow::Change_24G()
         OpenUart_Clicked();
     ui->pushButton_ICMode->setEnabled(true);
     ui->pushButton_IDMode->setEnabled(true);
-    ui->pushButton_ETCMode->setEnabled(true);
-    ui->pushButton_ZigBeeMode->setEnabled(false);
 
     ui->comboBox_Baud->setCurrentIndex(5);//默认波特率
     ui->stackedWidget->setCurrentIndex(3);//界面切换
@@ -930,7 +766,7 @@ void MainWindow::ReadUart()
     QByteArray RecData_AA;
     if(Show_Mode != 1  && !IsStop && IsOpen)
         Rec_Num += Serial.bytesAvailable();
-    Sleep(30);
+    this->thread()->msleep(30);
     RecData_AA = Serial.readAll();                              // 读取串口的数据
     RecData = RecData_AA.toHex(' ').toUpper();
     switch(Mode)
@@ -2442,51 +2278,20 @@ void MainWindow::ETC_Data_Analysis()
             if(Show_Mode != 1 && !IsStop && IsOpen)
                 ui->textEdit_Data->append(Time_str+" --> "+ETC_Data+"(读取RSSI成功)");
             float RSSI = ((ETC_Data.mid(15,2)+ETC_Data.mid(18,2)).toInt(0,16))*0.1; //RSSI
-            ui->ETC_lineEdit_RSSI->setText(QString("%1").arg(RSSI));
+
         }
         else if(ETC_Data.mid(6,2) == "29")
         {
             if(Show_Mode != 1 && !IsStop && IsOpen)
                 ui->textEdit_Data->append(Time_str+" --> "+ETC_Data+"(读取指定区域数据成功)");
-            ui->ETC_label_Data_State->setText("读取成功");
+
             QString Read_Length;
-            if(ui->ETC_lineEdit_ReadLength->text() == "0")
-                Read_Length = "Max";
-            else
-                Read_Length = ui->ETC_lineEdit_ReadLength->text();
+
             int Data_length = (ETC_Data.mid(9,2)+ETC_Data.mid(12,2)).toInt(0,16);
             if(ETC_IsA==2)
             {
                 ETC_A_Balance = (ETC_Data.mid(15,2)+ETC_Data.mid(18,2)).toInt(0,16);
-                ui->ETC_lineEdit_A_Balance->setText(QString::number(ETC_A_Balance,10));
-//                static long Last_A_Balance = 0;
-//                long BalanceTest = (ETC_Data.mid(15,2)+ETC_Data.mid(18,2)).toInt(0,16);
-//                if(BalanceTest > Last_A_Balance)
-//                {
-//                    if(Last_A_Balance + ui->ETC_lineEdit_A_Up_Money->text().toInt() != BalanceTest || BalanceTest == crcTest)
-//                    {
-//
-//                    }
-//                    else
-//                   {
-//                        ETC_A_Balance = BalanceTest;
-//                        ui->ETC_lineEdit_A_Balance->setText(QString::number(ETC_A_Balance,10));
-//                        Last_A_Balance = ETC_A_Balance;
-//                   }
-//                }
-//                else if(BalanceTest < Last_A_Balance)
-//                {
-//                    if(Last_A_Balance - ui->ETC_lineEdit_A_Down_Money->text().toInt() != BalanceTest || BalanceTest == crcTest)
-//                    {
-//
-//                    }
-//                    else
-//                    {
-//                        ETC_A_Balance = BalanceTest;
-//                        ui->ETC_lineEdit_A_Balance->setText(QString::number(ETC_A_Balance,10));
-//                        Last_A_Balance = ETC_A_Balance;
-//                    }
-//                }
+
             }
             else if(ETC_IsA==1)
             {
