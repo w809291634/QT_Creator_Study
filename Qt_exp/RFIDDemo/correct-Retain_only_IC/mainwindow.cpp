@@ -385,59 +385,31 @@ void MainWindow::OpenUart_Clicked()
 }
 
 /*********************************************************************************************
-* 名称:ConvertHexChar()
-* 功能:将Hex型转换为Char型
-* 参数:ch-需要转换的Hex型数据
-* 返回:转换完成的Char型数据
-*********************************************************************************************/
-char MainWindow::ConvertHexChar(char ch)
-{
-    if((ch >= '0') && (ch <= '9'))
-            return ch-0x30;
-        else if((ch >= 'A') && (ch <= 'F'))
-            return ch-'A'+10;
-        else if((ch >= 'a') && (ch <= 'f'))
-            return ch-'a'+10;
-        else return ch-ch;                                      //不在0-f范围内的会发送成0
-}
-
-/*********************************************************************************************
 * 名称:StringToHex()
-* 功能:将字符串转换为十六进制
-* 参数:str-需要转换的字符串
-*     send_data-转换后的十六进制数
+* 功能:将带有空格字符串 按照 16进制 进行储存
+* 参数:str-需要转换的字符串，带有空格
+*     send_data-16进制 数组
 * 返回:无
 *********************************************************************************************/
 void MainWindow::StringToHex(QString str,QByteArray &send_data)
 {
-    int hex_data,lowhex_data;
-    int hex_data_len = 0;
-    int len = str.length();
+    int convert=0;                          // 转换 成功 的次数
+    int len = str.length();                 // 字符串 长度
     send_data.resize(len/2);
-    char lstr,hstr;
-    for(int i=0; i<len; )
-    {
-        hstr = str[i].toLatin1();
-        if(hstr == ' ')
-        {
-            i++;
-            continue;
-        }
-        i++;
-        if(i >= len)
-            break;
-        lstr = str[i].toLatin1();
-        hex_data = ConvertHexChar(hstr);
-        lowhex_data = ConvertHexChar(lstr);
-        if((hex_data == 16)||(lowhex_data == 16))
-            break;
-        else
-            hex_data = hex_data*16 + lowhex_data;
-        i++;
-        send_data[hex_data_len] = static_cast<char>(hex_data);
-        hex_data_len++;
+
+    QByteArray byte_arr= str.toLatin1();
+    char* c_string=byte_arr.data();         // 转换 C 字符串
+
+    for (int i=0; i<len; i++) {
+        char _str[3]={0};
+        char hstr = str[i].toLatin1();
+        if(hstr == ' ') continue;
+        memcpy(_str,c_string+i,2);          // 取 需要转换的 两个字节
+        send_data[convert]=static_cast<char>(strtol(_str, nullptr, 16));    // 将两个字节字符串 用 16进制单字节 数储存
+        i++;                                // 跳过 低位
+        convert++;                          // 成功次数
     }
-    send_data.resize(hex_data_len);
+    send_data.resize(convert);
 }
 
 /*********************************************************************************************
@@ -672,7 +644,7 @@ void MainWindow::ID_Read_Card()
     QByteArray Send_Data;
     QString Mold_125 = "AB BA 00 15 00 15";                 //读取125k卡的指令
     StringToHex(Mold_125,Send_Data);                        //先将发送框的内容转换为Hex型
-    qDebug()<< Send_Data;
+    qDebug()<< Send_Data;       // "\xAB\xBA\x00\x15\x00\x15"
     Serial.write(Send_Data);
     Send_Num += Serial.bytesToWrite();
     ui->label_Send_Num->setText(QString::number(Send_Num));

@@ -262,17 +262,37 @@ void MainWindow::on_ICcard_page_btn_clicked()
     ui->stackedWidget->setCurrentIndex(1);
 }
 
-
+// 将带有空格字符串 按照 16进制 进行储存
+// str-需要转换的字符串，带有空格  send_data-16进制 数组
 void MainWindow::StringToHex(QString str,QByteArray &send_data)
 {
+    int convert=0;                          // 转换 成功 的次数
+    int len = str.length();                 // 字符串 长度
+    send_data.resize(len/2);
 
+    QByteArray byte_arr= str.toLatin1();
+    char* c_string=byte_arr.data();         // 转换 C 字符串
 
+    for (int i=0; i<len; i++) {
+        char _str[3]={0};
+        char hstr = str[i].toLatin1();
+        if(hstr == ' ') continue;
+        memcpy(_str,c_string+i,2);          // 取 需要转换的 两个字节
+        send_data[convert]=static_cast<char>(strtol(_str, nullptr, 16));    // 将两个字节字符串 用 16进制单字节数 储存
+        i++;                                // 跳过 低位
+        convert++;                          // 成功次数
+    }
+    send_data.resize(convert);
 }
 
 /* ID卡 应用界面 槽函数 */
 void MainWindow::on_ID_read_btn_clicked()
 {
-
+    QByteArray Send_Data;
+    QString Mold_125 = "AB BA 00 15 00 15";                 //读取125k卡的指令
+    StringToHex(Mold_125,Send_Data);                        //先将发送框的内容转换为Hex型
+    qDebug()<< Send_Data;       // "\xAB\xBA\x00\x15\x00\x15"
+    Serial->write(Send_Data);
 }
 
 void MainWindow::on_ID_write_btn_clicked()
