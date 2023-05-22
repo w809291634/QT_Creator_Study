@@ -34,7 +34,6 @@ public:
     QTimer *timer_read = new QTimer(this);
     QTimer *IC_timer_read = new QTimer(this); //IC寻卡定时器
     QTimer *IC_time_Mess = new QTimer(this);//IC读取用户信息
-    QTimer *ETC_A_Read_UserData = new QTimer(this);//ETC读取用户余额信息
 
     QStandardItemModel *model_ID = new QStandardItemModel();
     QStandardItemModel *model_Data = new QStandardItemModel();
@@ -50,13 +49,6 @@ public:
     //IC
     void Change_Money(unsigned long x);
     void Money_Down();
-    //ETC
-    unsigned short CRC16_CCITT_FALSE(unsigned char *puchMsg, unsigned int usDataLen);
-    QString Get_CRC16(QString str,unsigned char length);
-    void ETC_Read_A_Card();
-    void ETC_Read_A_Money();  
-    void ETC_A_Revise(unsigned long Revise_Money);
-    
 
     unsigned char Mode = 1;
     char Name[10][50];      //储存卡号对应的员工信息
@@ -78,6 +70,7 @@ public:
 
     QString get_Data(QString lastData, unsigned char lastLen, unsigned char addLen);
     void Uart_DataHandle(unsigned char lastLen, unsigned char addLen);
+
 private:
     Ui::MainWindow *ui;
     QString ver = "180929";
@@ -101,6 +94,7 @@ private:
     //ETC应用界面停车时间
     QTime Time_Stop_Start;
     QTime Time_Stop_Over;
+
 private slots:
     void Get_Com();
     void OpenUart_Clicked();
@@ -112,8 +106,6 @@ private slots:
     void Del_Num();
     void Change_ID();
     void Change_IC();
-    void Change_ETC();
-    void Change_24G();
     void About_up();
 
     //ID考勤系统
@@ -154,52 +146,6 @@ private slots:
     void on_IC_lineEdit_Sys_Write_textChanged(const QString &arg1);
     void on_IC_comboBox_Sys_Lump_activated(int index);
     void on_IC_comboBox_Sys_Region_activated(int index);
-    //ETC
-    void ETC_Momery_Change();
-    void ETC_Look_Begin();
-    void ETC_Data_Analysis();
-    void Del_Look_Data();
-    void ETC_Change_Mode();
-    void ETC_Read_Data();
-    void ETC_Get_Region();
-    void ETC_Set_Region();
-    void ETC_Get_RF();
-    void ETC_Set_RF();
-    void ETC_Get_TxLv();
-    void ETC_Set_TxLv();
-    void ETC_Get_RSSI();
-    void ETC_Write_Data();
-    void ETC_One_Look();
-
-    void ETC_Read_A_UserData();
-    void ETC_A_Up_Money();
-    void ETC_A_Down_Money();
-
-    void ETC_B_Mode();
-    void ETC_B_Del_Time();
-    void ETC_B_Up_Handrail();
-    void ETC_B_Down_Handrail();
-    void ETC_B_Handrail_AllOpen();
-    void ETC_B_Del_User();
-    void ETC_B_Up_Money();
-    long ETC_B_Down_Money();
-    void ETC_B_Price_Save();
-
-    void on_ETC_lineEdit_WriteData_textChanged(const QString &arg1);
-    //2.4G
-    void G_Change_Mode();
-    void G_Analysis();
-    void G_Del_Cargo();
-    void G_Read_Panid();
-    void G_Write_Panid();
-    void G_Read_Data();
-    void G_Write_Data();
-    void G_Get_Row();
-
-    void G_Read_CardData();
-    void G_Write_CardData();
-    void G_Look_Card();
-    void G_Label_ID();
 };
 
 #endif // MAINWINDOW_H
