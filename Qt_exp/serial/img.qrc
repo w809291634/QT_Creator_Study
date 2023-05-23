@@ -1,6 +1,0 @@
-<RCC>
-    <qresource prefix="/">
-        <file>image/RFIDDemo.ico</file>
-        <file>image/RFID-Logo_05.png</file>
-    </qresource>
-</RCC>
