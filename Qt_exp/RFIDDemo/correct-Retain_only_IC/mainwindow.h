@@ -126,26 +126,12 @@ private slots:
     void IC_Write_Region();
     void IC_Read_Region();
 
-    void IC_Read_Mess();
-    void Mode_Change();
-    void IC_Read_Mess_flag();
-    void Money_Up();
-    void Down_Money_Save();
-
-    void IC_Ticket_Reset();
-    void IC_App_Ticket_Save();
-    void IC_App_Up_Money();
-    void IC_App_Send_Balance();
-    void IC_App_Down_Money();
-
-    void IC_Change_Pass();
-    void IC_Switch_Mode();
-
     void on_IC_radioButton_Pass_B_clicked(bool checked);
     void on_IC_radioButton_Pass_A_clicked(bool checked);
     void on_IC_lineEdit_Sys_Write_textChanged(const QString &arg1);
     void on_IC_comboBox_Sys_Lump_activated(int index);
     void on_IC_comboBox_Sys_Region_activated(int index);
+
 };
 
 #endif // MAINWINDOW_H

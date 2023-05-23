@@ -39,7 +39,6 @@ static QString isCom = "";
 static QString com_str[30];
 static QString ID_Data;                                         // ID卡模式处理过后的数据
 static QString IC_Data;                                         // IC卡模式处理过后的数据
-static QString ETC_Data;                                        // 900M卡模式处理过后的数据
 
 #define Storage_Time   16
 
@@ -71,23 +70,9 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->IC_pushButton_Look_Bign->setEnabled(false);
     ui->IC_pushButton_Sys_Read->setEnabled(false);
     ui->IC_pushButton_Sys_Write->setEnabled(false);
-    ui->IC_pushButton_Mess->setEnabled(false);
-    ui->IC_pushButton_Up->setEnabled(false);
-    ui->IC_pushButton_Down->setEnabled(false);
     ui->IC_pushButton_one->setEnabled(false);
 
-    ui->IC_pushButton_App_Ticket->setEnabled(false);
-    ui->IC_pushButton_App_Up_Money->setEnabled(false);
-
-    ui->IC_radioButton_In->setEnabled(false);
-    ui->IC_radioButton_Out->setEnabled(false);
-    ui->IC_pushButton_Pass_oK->setEnabled(false);
-
     //获取当前设置的初始化时间
-    Time_Morn_Up_Last = ui->ID_timeEdit_Morn_Up->time();
-    Time_Morn_Down_Last = ui->ID_timeEdit_Morn_Down->time();
-    Time_Afte_Up_Last = ui->ID_timeEdit_Afte_Up->time();
-    Time_Afte_Down_Last = ui->ID_timeEdit_Afte_Down->time();
     Time_Morn_Up = Time_Morn_Up_Last;
     Time_Morn_Down = Time_Morn_Down_Last;
     Time_Afte_Up = Time_Afte_Up_Last;
@@ -102,26 +87,20 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->IC_lineEdit_Pass_Last->setValidator(new QRegExpValidator(Regexp_Pass,ui->IC_lineEdit_Pass_Last));
     ui->IC_lineEdit_Pass_New->setValidator(new QRegExpValidator(Regexp_Pass,ui->IC_lineEdit_Pass_New));
     ui->IC_lineEdit_Sys_Pass->setValidator(new QRegExpValidator(Regexp_Pass,ui->IC_lineEdit_Sys_Pass));
-    ui->IC_lineEdit_Mess_Pass->setValidator(new QRegExpValidator(Regexp_Pass,ui->IC_lineEdit_Mess_Pass));
     ui->IC_lineEdit_Sys_Write->setValidator(new QRegExpValidator(Regexp_Sys,ui->IC_lineEdit_Sys_Write));
-    ui->IC_lineEdit_Pass->setValidator(new QRegExpValidator(Regexp_Pass,ui->IC_lineEdit_Pass));
     ui->ID_lineEdit_Write->setValidator(new QRegExpValidator(Regexp_Num_Card,ui->ID_lineEdit_Write));
 
     //表格
     model_ID->setColumnCount(2);
     model_ID->setHeaderData(0,Qt::Horizontal," 姓  名 ");
     model_ID->setHeaderData(1,Qt::Horizontal," 卡  号 ");
-    ui->ID_tableView_ID->setEditTriggers(QAbstractItemView::NoEditTriggers);//禁止编辑
-    ui->ID_tableView_ID->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
-    ui->ID_tableView_ID->setModel(model_ID);
+
 
     model_Data->setColumnCount(3);
     model_Data->setHeaderData(0,Qt::Horizontal," 姓 名 ");
     model_Data->setHeaderData(1,Qt::Horizontal,"上班时间");
     model_Data->setHeaderData(2,Qt::Horizontal,"下班时间");
-    ui->ID_tableView_Data->setEditTriggers(QAbstractItemView::NoEditTriggers);//禁止编辑
-    ui->ID_tableView_Data->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
-    ui->ID_tableView_Data->setModel(model_Data);
+
 
     Get_Com();
     Get_Time();
@@ -213,7 +192,6 @@ void MainWindow::Get_Time()
     if(i == 3)
     {
         i = 0;
-        ui->ID_pushButton_Save->setText("保存");
         ui->IC_label_Pass_State->setText("");
         ui->IC_label_Data_State->setText("");
         ui->ID_label_State->setText("");
@@ -306,17 +284,7 @@ void MainWindow::OpenUart_Clicked()
         ui->IC_pushButton_Look_Bign->setEnabled(false);
         ui->IC_pushButton_Sys_Read->setEnabled(false);
         ui->IC_pushButton_Sys_Write->setEnabled(false);
-        ui->IC_pushButton_Mess->setEnabled(false);
-        ui->IC_pushButton_Up->setEnabled(false);
-        ui->IC_pushButton_Down->setEnabled(false);
         ui->IC_pushButton_one->setEnabled(false);
-
-        ui->IC_pushButton_App_Ticket->setEnabled(false);
-        ui->IC_pushButton_App_Up_Money->setEnabled(false);
-
-        ui->IC_radioButton_In->setEnabled(false);
-        ui->IC_radioButton_Out->setEnabled(false);
-        ui->IC_pushButton_Pass_oK->setEnabled(false);
     }
     else                                                        //串口当前处于未打开状态
     {
@@ -327,7 +295,6 @@ void MainWindow::OpenUart_Clicked()
             ui->pushButton_Open->setText("关闭串口");           //按键文字变化
             if(Mode == 2 && IC_Mode)
             {
-                IC_Switch_Mode();
                 QTimer::singleShot(500, this, SLOT(IC_App_Ticket_Save()));
                 QTimer::singleShot(1000, this, SLOT(IC_Change_Pass()));
             }
@@ -358,20 +325,7 @@ void MainWindow::OpenUart_Clicked()
                  ui->IC_comboBox_Sys_Lump->currentIndex()==0))
                     ui->IC_pushButton_Sys_Write->setEnabled(false);
 
-            ui->IC_pushButton_Mess->setEnabled(true);
-            ui->IC_pushButton_Up->setEnabled(true);
-            ui->IC_pushButton_Down->setEnabled(true);
             ui->IC_pushButton_one->setEnabled(true);
-
-            ui->IC_pushButton_App_Ticket->setEnabled(true);
-
-            ui->IC_radioButton_In->setEnabled(true);
-            ui->IC_radioButton_Out->setEnabled(true);
-            ui->IC_pushButton_Pass_oK->setEnabled(true);
-            if(IC_Bus_Mode)
-                ui->IC_pushButton_App_Up_Money->setEnabled(true);
-            else
-                ui->IC_pushButton_App_Up_Money->setEnabled(false);
 
         }
         else
@@ -443,8 +397,6 @@ void MainWindow::Change_ID()
     else
         ui->comboBox_Baud->setCurrentIndex(5);
     ui->stackedWidget->setCurrentIndex(0);
-    ui->IC_lineEdit_Mess_Num->clear();
-    ui->IC_lineEdit_Mess_Money->clear();
 
     IC_timer_read->stop();
     disconnect(IC_timer_read,SIGNAL(timeout()),this,SLOT(IC_Send_Look()));
@@ -462,7 +414,6 @@ void MainWindow::Change_IC()
 {
     if(IsOpen)
         OpenUart_Clicked();
-    Mode_Change();
     ui->pushButton_ICMode->setEnabled(false);
     ui->pushButton_IDMode->setEnabled(true);
 
@@ -479,7 +430,6 @@ void MainWindow::About_up()
 {
     QMessageBox::about(this,"版本更新","当前版本:V1.0."+ ver +"\n最新版本:V1.0."+ ver +"\n当前已是最新版本！");
 }
-
 
 /*********************************************************************************************
 * 名称:Show_Data()
@@ -599,7 +549,6 @@ void MainWindow::ReadUart()
     ui->label_Rec_Num->setText(QString::number(Rec_Num));
 }
 
-
 /*******************************************************************************************************/
 //ID考勤系统
 /*******************************************************************************************************/
@@ -644,7 +593,6 @@ void MainWindow::ID_Read_Card()
     QByteArray Send_Data;
     QString Mold_125 = "AB BA 00 15 00 15";                 //读取125k卡的指令
     StringToHex(Mold_125,Send_Data);                        //先将发送框的内容转换为Hex型
-    qDebug()<< Send_Data;       // "\xAB\xBA\x00\x15\x00\x15"
     Serial.write(Send_Data);
     Send_Num += Serial.bytesToWrite();
     ui->label_Send_Num->setText(QString::number(Send_Num));
@@ -729,29 +677,7 @@ bool MainWindow::Message()
 *********************************************************************************************/
 void MainWindow::Time_Save()
 {
-    //判断当前时间设置的逻辑是否正确
-    if((ui->ID_timeEdit_Afte_Up->time() > ui->ID_timeEdit_Afte_Down->time()) ||
-            ui->ID_timeEdit_Morn_Up->time() > ui->ID_timeEdit_Morn_Down->time())
-    {
-        ui->ID_pushButton_Save->setText("保存失败");
-        ui->ID_timeEdit_Morn_Up->setTime(Time_Afte_Down_Last);
-        ui->ID_timeEdit_Morn_Down->setTime(Time_Morn_Down_Last);   //恢复时间范围为初始值
-        Time_Morn_Up = Time_Morn_Up_Last;
-        Time_Morn_Down = Time_Morn_Down_Last;
-        ui->ID_timeEdit_Afte_Up->setTime(Time_Afte_Up_Last);
-        ui->ID_timeEdit_Afte_Down->setTime(Time_Afte_Down_Last);
-        Time_Afte_Up = Time_Afte_Up_Last;
-        Time_Afte_Down = Time_Afte_Down_Last;
-        QMessageBox::warning(this,"提示","下班时间应不早于上班时间，请重新修改上下班时间！");
-    }
-    else
-    {
-        Time_Morn_Up = ui->ID_timeEdit_Morn_Up->time();
-        Time_Morn_Down = ui->ID_timeEdit_Morn_Down->time();
-        Time_Afte_Up = ui->ID_timeEdit_Afte_Up->time();
-        Time_Afte_Down = ui->ID_timeEdit_Afte_Down->time();
-        ui->ID_pushButton_Save->setText("保存成功");
-    }
+
 }
 
 //开启门禁
@@ -799,139 +725,26 @@ void MainWindow::ID_CheckMode(bool mode)
 *********************************************************************************************/
 void MainWindow::ID_Analysis()
 {
-    QString state;
-    bool ID_OK = false;
-    QString Mold = ID_Data.mid(0,8);
-    if(Mold == "BF 05 0F" && ID_Binding_OK)
+    if(ID_Data == "CD DC 00 80 00 80")
     {
-        RecData_ID = ID_Data.mid(9,14);
-        if(RecData_ID.length() == 14)  //卡号正常
-        {
-            if(Show_Mode != 1 && !IsStop && IsOpen)
-                ui->textEdit_Data->append(Time_str+" --> "+ID_Data+"(读取到员工卡号)");
-            for(int i=0; i<10; i++)
-            {
-                if(RecData_ID == ID[i])
-                {
-                    //判断当前时间段
-                    if(!IsMorn)
-                    {
-                        if(Sign_Num[i] == 0)
-                        {
-                            if(time > Time_Afte_Up)
-                            {
-                                state = "(迟到)";
-                                ID_CheckMode(0);
-                            }
-                            else
-                            {
-                                state = "(正常)";
-                                ID_CheckMode(1);
-                            }
-                            model_Data->setItem(i,1,new QStandardItem(Time_str+state));
-                            model_Data->setItem(i,2,new QStandardItem(""));
-                        }
-                        else
-                        {
-                            if(time < Time_Afte_Down)
-                            {
-                                state = "(早退)";
-                                ID_CheckMode(0);
-                            }
-                            else
-                            {
-                                state = "(正常)";
-                                ID_CheckMode(1);
-                            }
-                            model_Data->setItem(i,2,new QStandardItem(Time_str+state));
-                        }
-                    }
-                    else
-                    {
-                        if(Sign_Num[i] == 0)
-                        {
-                            if(time > Time_Morn_Up)
-                            {
-                                state = "(迟到)";
-                                ID_CheckMode(0);
-                            }
-                            else
-                            {
-                                state = "(正常)";
-                                ID_CheckMode(1);
-                            }
-                            model_Data->setItem(i,1,new QStandardItem(Time_str+state));
-                            model_Data->setItem(i,2,new QStandardItem(""));
-                        }
-                        else
-                        {
-                            if(time < Time_Morn_Down)
-                            {
-                                state = "(早退)";
-                                ID_CheckMode(0);
-                            }
-                            else
-                            {
-                                state = "(正常)";
-                                ID_CheckMode(1);
-                            }
-                            model_Data->setItem(i,2,new QStandardItem(Time_str+state));
-                        }
-                    }
-                    if(Sign_Num[i] < 1)                         //签到次数
-                        Sign_Num[i]++;
-                    else
-                        Sign_Num[i] = 0;
-                    ID_OK = true;
-                    QTimer::singleShot(500, this, SLOT(ID_Open_Door()));   //开门
-                    break;
-                }
-            }
-            //如果是第一次刷卡
-            if(ID_OK == false)
-            {
-                if(ID_Num >= 10)
-                    QMessageBox::warning(this,"提示","超出记录次数范围！");
-                else
-                {
-                    if(Message())                               //输入有效的姓名
-                    {
-                        strcpy(Name[ID_Num],ID_Name.toUtf8().data());//储存员工姓名
-                        model_Data->setItem(ID_Num,0,new QStandardItem(QString::fromUtf8(Name[ID_Num])));
-                        ID[ID_Num] = RecData_ID;
-                        ID_Num++;
-                        ID_Open_Door();         //开门
-                        ID_Binding_OK = true;
-                    }
-                }
-            }
-            ID_Data.clear();
-        }
+        if(Show_Mode != 1 && !IsStop && IsOpen)
+            ui->textEdit_Data->append(Time_str+" --> "+ID_Data+"(未读取到卡号)");
     }
-    else
+    else if(ID_Data == "CD DC 00 81 00 81")
     {
-        if(ID_Data == "CD DC 00 80 00 80")
-        {
-            if(Show_Mode != 1 && !IsStop && IsOpen)
-                ui->textEdit_Data->append(Time_str+" --> "+ID_Data+"(未读取到卡号)");
-        }
-        else if(ID_Data == "CD DC 00 81 00 81")
-        {
-            if(Show_Mode != 1 && !IsStop && IsOpen)
-                ui->textEdit_Data->append(Time_str+" --> "+ID_Data+"(修改卡号成功)");
-            ui->ID_listWidget_Card_Data->addItem(Time_str+" <-- 修改卡号为 "+ui->ID_lineEdit_Write->text());
-        }
-        else if(ID_Data.mid(0, 11) == "CD DC 00 81")
-        {
-            if(Show_Mode != 1 && !IsStop && IsOpen)
-                ui->textEdit_Data->append(Time_str+" --> "+ID_Data+"(读取到卡号)");
-            ui->ID_listWidget_Card_Data->addItem(Time_str+" <-- 读取到卡号为 "+ID_Data.mid(14, 15).remove(" "));
-        }
-        ui->ID_listWidget_Card_Data->scrollToBottom();
-        ID_Data.clear();
+        if(Show_Mode != 1 && !IsStop && IsOpen)
+            ui->textEdit_Data->append(Time_str+" --> "+ID_Data+"(修改卡号成功)");
+        ui->ID_listWidget_Card_Data->addItem(Time_str+" <-- 修改卡号为 "+ui->ID_lineEdit_Write->text());
     }
+    else if(ID_Data.mid(0, 11) == "CD DC 00 81")
+    {
+        if(Show_Mode != 1 && !IsStop && IsOpen)
+            ui->textEdit_Data->append(Time_str+" --> "+ID_Data+"(读取到卡号)");
+        ui->ID_listWidget_Card_Data->addItem(Time_str+" <-- 读取到卡号为 "+ID_Data.mid(14, 15).remove(" "));
+    }
+    ui->ID_listWidget_Card_Data->scrollToBottom();
+    ID_Data.clear();
 }
-
 
 /*********************************************************************************************/
 //公交非接触IC卡
@@ -998,7 +811,6 @@ void MainWindow::IC_Data_Look()
         {
             if(Mode_flag == 5)
             {
-                ui->IC_lineEdit_Mess_Num->setText(IC_Data.mid(15,11).remove(" "));
                 State = "(读取用户信息成功)";
             }
             else
@@ -1037,19 +849,11 @@ void MainWindow::IC_Data_Look()
                 {
                     State = "(充值成功)";
                     IC_CardApp_Up = false;
-                    int m = ui->IC_lineEdit_Mess_Money->text().toInt() + ui->IC_lineEdit_Up_Money->text().toInt();
-                    ui->IC_lineEdit_Mess_Money->setText(QString::number(m, 10));
-                    ui->IC_listWidget_Data->addItem(Time_str+" --> "+ui->IC_lineEdit_Mess_Num->text()+" 充值 "+ui->IC_lineEdit_Up_Money->text());
-                    ui->IC_listWidget_Data->scrollToBottom();
                 }
                 else if(IC_CardApp_Down)
                 {
                     State = "(消费成功)";
                     IC_CardApp_Down = false;
-                    int m = ui->IC_lineEdit_Mess_Money->text().toInt() - ui->IC_lineEdit_Down_Money->text().toInt();
-                    ui->IC_lineEdit_Mess_Money->setText(QString::number(m, 10));
-                    ui->IC_listWidget_Data->addItem(Time_str+" <-- "+ui->IC_lineEdit_Mess_Num->text()+" 消费 "+ui->IC_lineEdit_Down_Money->text());
-                    ui->IC_listWidget_Data->scrollToBottom();
                 }
                 IC_Mess_Read_ok++;
                 break;
@@ -1079,7 +883,6 @@ void MainWindow::IC_Data_Look()
                 {
                     State = "(读取用户信息成功)";  //读取余额
                     balance = (IC_Data.mid(60,2)+IC_Data.mid(63,2)+IC_Data.mid(66,2)).toInt(nullptr,16);//余额
-                    ui->IC_lineEdit_Mess_Money->setText(QString::number(balance,10));
                     IC_Mess_Read_ok++;
                 }
                 break;
@@ -1088,15 +891,11 @@ void MainWindow::IC_Data_Look()
                 {
                     State = "(充值成功)";
                     IC_CardApp_Up = false;
-                    ui->IC_listWidget_Data->addItem(Time_str+" --> "+ui->IC_lineEdit_Mess_Num->text()+" 充值 "+ui->IC_lineEdit_Up_Money->text());
-                    ui->IC_listWidget_Data->scrollToBottom();
                 }
                 else if(IC_CardApp_Down)
                 {
                     State = "(消费成功)";
                     IC_CardApp_Down = false;
-                    ui->IC_listWidget_Data->addItem(Time_str+" <-- "+ui->IC_lineEdit_Mess_Num->text()+" 消费 "+ui->IC_lineEdit_Down_Money->text());
-                    ui->IC_listWidget_Data->scrollToBottom();
                 }
                 IC_Mess_Read_ok++;
                 break;
@@ -1150,112 +949,15 @@ void MainWindow::IC_Data_Look()
     }
     else   //应用界面
     {
-        QString RecData_IC_App_Data;
 
-        if(RecData_IC_App_Data.isEmpty())
-        {
-            RecData_IC_App_Data += IC_Data;
-        }
-        else
-        {
-            RecData_IC_App_Data += IC_Data;
-        }
-        for(int x=0; x<RecData_IC_App_Data.length(); x+=3)              //解析储存的数据
-        {
-            if(RecData_IC_App_Data.mid(x,2) == "BF")
-            {
-                int RecData_Sum = RecData_IC_App_Data.mid(x+3,2).toInt(nullptr,16);//获取数据长度
-                if(RecData_IC_App_Data.length()>=(RecData_Sum+4)*3-1)
-                {
-                    IC_Rec = RecData_IC_App_Data.mid(x,(RecData_Sum+4)*3);//截取数据长度的数据
-
-                    if(IC_Rec.mid(0,2) == "BF")
-                    {
-                        if(IC_Rec.mid(6,2) == "0B")
-                        {
-                            if(IC_Rec.mid(3,2) == "08")
-                            {
-                                ui->IC_lineEdit_App_Card_Num->setText(IC_Rec.mid(9,11).remove(" ")); //卡号
-                                Balance_Int = (IC_Rec.mid(24,2)+IC_Rec.mid(27,2)+IC_Rec.mid(30,2)).toInt(nullptr,16);//余额
-                                ui->IC_lineEdit_App_Balance->setText(QString::number(Balance_Int,10));
-                                if(Balance_Int >= Ticket_Int)
-                                    IC_App_Down_Ok = false;
-                                State = "(用户信息)";
-                            }
-                            else
-                            {
-                                if(IC_Rec.mid(9,2) == "00")
-                                {
-                                    if(!IC_IsUp)
-                                    {
-                                        ui->IC_listWidget_App_Data->addItem(Time_str+" <-- "+ui->IC_lineEdit_App_Card_Num->text()+
-                                                                            " 扣费 "+QString::number(Ticket_Int)+"元");
-                                        State = "(扣费成功)";
-                                    }
-                                    else
-                                    {
-                                        ui->IC_listWidget_App_Data->addItem(Time_str+" --> "+ui->IC_lineEdit_App_Card_Num->text()+
-                                                                            " 充值 "+ui->IC_lineEdit_App_Up_Money->text()+"元");
-                                        State = "(充值成功)";     
-                                    }
-                                    ui->IC_lineEdit_App_Balance->setText(QString::number(Balance_Int, 10));
-                                    ui->IC_listWidget_App_Data->scrollToBottom();
-                                }
-                                else            //修改余额失败
-                                {
-                                    if(!IC_IsUp)
-                                        State = "(扣费失败)";
-                                    else
-                                        State = "(充值失败)";
-                                }
-                            }
-                        }
-                        else if(IC_Rec.mid(6,2) == "0C")
-                        {
-                            State = "(修改票价成功)";//修改票价成功
-                            ui->IC_listWidget_App_Data->addItem(Time_str+" ---- 修改票价为"+QString::number(Ticket_Int,10));
-                            ui->IC_listWidget_App_Data->scrollToBottom();
-                        }
-                        else if(IC_Rec.mid(6,2) == "0D")
-                        {
-                            QString m;
-                            State = "(修改模式成功)";//修改模式成功
-                            if(!ui->IC_radioButton_In->isChecked())
-                                m = "乘车模式";
-                            else
-                                m = "充值模式";
-                            ui->IC_listWidget_App_Data->addItem(Time_str+" ---- 修改模式为"+m);
-                            ui->IC_listWidget_App_Data->scrollToBottom();
-                        }
-                        else if(IC_Rec.mid(6,2) == "0E")
-                        {
-                            State = "(同步密码成功)";//同步密码成功
-                            ui->IC_listWidget_App_Data->addItem(Time_str+" ---- 修改单片机内部密码为"+ui->IC_lineEdit_Mess_Pass->text());
-                            ui->IC_listWidget_App_Data->scrollToBottom();
-                        }
-                    }
-                    RecData_IC_App_Data.replace(x,(RecData_Sum+4)*3,"");//删除已经解析完的数据
-                    x=-3;
-                }
-                else
-                {
-                    break;
-                }
-            }
-        }
-        if(Show_Mode != 1 && !IsStop && IsOpen && !IC_Rec.isEmpty())
-            ui->textEdit_Data->append(Time_str+" --> "+IC_Rec.toUpper()+State);
     }
     if(IC_Rec.mid(6,2) == "0B" && IC_Rec.mid(3,2) == "08")
     {
        if(!IC_App_Down_Ok && !IC_Bus_Mode )
        {
-           IC_App_Down_Money();  //扣费操作
            if(!IC_App_Down_Ok)
            {
                gross += Ticket_Int;
-               ui->IC_label_Head_Money->setFont(QFont("",15,QFont::Bold));
-               ui->IC_label_Head_Money->setText(QString::number(gross,10));
            }
        }
     }
@@ -1376,456 +1078,6 @@ void MainWindow::IC_Read_Region()
     }
 }
 
-
-/************************/
-/**********基础二***********/
-/************************/
-
-//界面切换
-void MainWindow::Mode_Change()
-{
-    static bool Band_Change = false;
-    if(ui->tabWidget_IC->currentIndex() == 0) //切换到基础界面
-    {
-        IC_Mode = false;
-        if(Band_Change)
-        {
-            if(IsOpen)
-                OpenUart_Clicked();
-
-            Band_Change = false;
-        }
-        ui->comboBox_Baud->setCurrentIndex(7); //设置默认波特率
-        IC_time_Mess->stop();
-        ui->IC_lineEdit_Mess_Num->clear();
-        ui->IC_lineEdit_Mess_Money->clear();
-    }
-    else if(ui->tabWidget_IC->currentIndex() == 1)       //切换到应用界面
-    {
-        IC_Mode = false;
-        if(Band_Change)
-        {
-            if(IsOpen)
-                OpenUart_Clicked();
-
-            Band_Change = false;
-        }
-        ui->comboBox_Baud->setCurrentIndex(7); //设置默认波特率
-        IC_timer_read->stop();
-        if(Begin_Look)
-            IC_Begin_Look();   //关闭寻卡功能
-    }
-    else
-    {
-        IC_Mode = true;
-        Band_Change = true;
-        if(IsOpen)
-            OpenUart_Clicked();
-        ui->comboBox_Baud->setCurrentIndex(5); //设置默认的波特率
-        IC_time_Mess->stop();
-        ui->IC_lineEdit_Mess_Num->clear();
-        ui->IC_lineEdit_Mess_Money->clear();
-        IC_timer_read->stop();
-        if(Begin_Look)
-            IC_Begin_Look();                  //关闭寻卡功能
-    }
-    IC_Mess_Read_ok = 0;
-}
-
-//点击获取用户信息
-void MainWindow::IC_Read_Mess_flag()
-{
-    Mess_Pass = ui->IC_lineEdit_Mess_Pass->text();
-    if(Mess_Pass.isEmpty())
-    {
-        QMessageBox::warning(this,"提示","密码不能为空!");
-    }
-    else if(Mess_Pass.length() < 12)
-    {
-        QMessageBox::warning(this,"提示","密码不能少于12位!");
-    }
-    else
-    {
-        IC_time_Mess->start(1000);
-    }
-}
-
-//读取信息
-void MainWindow::IC_Read_Mess()
-{
-    QByteArray Send_Data;
-    static bool i = false;
-    if(i)
-    {
-        i = false;
-        QString Sys_Data[3];
-        Sys_Data[0] = "ABBA";
-        Sys_Data[1] = "00120901010A";
-        Sys_Data[2] = Mess_Pass;
-        QString Mess = Sys_Data[0]+Sys_Data[1]+Sys_Data[2];
-        Mess +=  Get_Xor(4,2,Mess);
-        StringToHex(Mess,Send_Data);
-        Serial.write(Send_Data);
-        Mode_flag = 4;
-        Send_Num += Serial.bytesToWrite();
-        ui->label_Send_Num->setText(QString::number(Send_Num));
-        if(Show_Mode != 2 && !IsStop && IsOpen)
-        {
-            ui->textEdit_Data->append(Time_str+" <-- "+Add_Space(0,Mess)+"(读取指定扇区数据)");
-        }
-    }
-    else
-    {
-        i = true;
-        IC_Send_Look();
-        Mode_flag = 5;
-    }
-}
-
-//修改余额
-void MainWindow::Change_Money(unsigned long x)
-{
-    QByteArray Send_Data;
-    QString Sys_Data[6];
-    Sys_Data[0] = "ABBA";
-    Sys_Data[1] = "00131901010A"+ui->IC_lineEdit_Mess_Pass->text();
-    Sys_Data[2] = "00000000000000000000000000";
-    Sys_Data[3] = QString::number(x / 65536,16);
-    if(Sys_Data[3].toInt(nullptr,16) <= 15)
-    {
-        Sys_Data[3] = "0"+Sys_Data[3];
-    }
-    Sys_Data[4] = QString::number((x / 256) % 256,16);
-    if(Sys_Data[4].toInt(nullptr,16) <= 15)
-    {
-        Sys_Data[4] = "0"+Sys_Data[4];
-    }
-    Sys_Data[5] = QString::number((x % 256),16);
-    if(Sys_Data[5].toInt(nullptr,16) <= 15)
-    {
-        Sys_Data[5] = "0"+Sys_Data[5];
-    }
-    QString Money = Sys_Data[0]+Sys_Data[1]+Sys_Data[2]+Sys_Data[3]+Sys_Data[4]+Sys_Data[5];
-    Money += Get_Xor(4,2,Money);
-    StringToHex(Money,Send_Data);
-    Serial.write(Send_Data);
-    Send_Num += Serial.bytesToWrite();
-    ui->label_Send_Num->setText(QString::number(Send_Num));
-    if(Show_Mode != 2 && !IsStop && IsOpen)
-        ui->textEdit_Data->append(Time_str+" <-- "+Add_Space(0,Money)+"(修改余额操作)");
-}
-
-//充值
-void MainWindow::Money_Up()
-{
-    QString Money_str = ui->IC_lineEdit_Up_Money->text();
-    if(Money_str.isEmpty())
-    {
-        QMessageBox::warning(this,"提示","不能为空!");
-    }
-    else
-    {
-        unsigned long Money = Money_str.toInt(nullptr,10);
-        balance += Money;
-        if(balance > 16777215)
-        {
-            balance -= Money;
-            QMessageBox::warning(this,"提示","余额最大16777215元!请修改充值金额!");
-        }
-        else
-        {
-            Change_Money(static_cast<unsigned long>(balance));
-            IC_CardApp_Up = true;
-
-        }
-    }
-}
-
-//消费保存
-void MainWindow::Down_Money_Save()
-{
-    QString Down_Money_str = ui->IC_lineEdit_Down_Money->text();
-    if(Down_Money_str.isEmpty())
-    {
-        QMessageBox::warning(this,"提示","不能为空!");
-    }
-    else
-    {
-        Down_Money = Down_Money_str.toInt(nullptr,10);
-        Money_Down();
-    }
-}
-
-//消费
-void MainWindow::Money_Down()
-{
-    if(balance < Down_Money)
-    {
-        QMessageBox::warning(this,"提示","余额不足!请充值!");
-    }
-    else
-    {
-        balance -= Down_Money;
-        Change_Money(static_cast<unsigned long>(balance));
-
-        IC_CardApp_Down = true;
-    }
-}
-
-
-/***********应用************/
-
-//模式切换
-void MainWindow::IC_Switch_Mode()
-{
-    QByteArray Send_Data;
-    QString Switch_Mode;
-
-    if(ui->IC_radioButton_Out->isChecked())
-    {
-        IC_Bus_Mode = false;
-        ui->IC_pushButton_App_Up_Money->setEnabled(false);
-        ui->IC_label_Pass_Text->setText("密码A：");
-    }
-    else
-    {
-        IC_Bus_Mode = true;
-        ui->IC_pushButton_App_Up_Money->setEnabled(true);
-        ui->IC_label_Pass_Text->setText("密码B：");
-    }
-    if(!IC_Bus_Mode)
-        Switch_Mode = "AF 01 0D 0A 06";
-    else
-    {
-        Switch_Mode = "AF 01 0D 0B 07";
-
-    }
-    StringToHex(Switch_Mode,Send_Data);
-    Serial.write(Send_Data);
-    Send_Num += Serial.bytesToWrite();
-    ui->label_Send_Num->setText(QString::number(Send_Num));
-    if(Show_Mode != 2 && !IsStop && IsOpen)
-        ui->textEdit_Data->append(Time_str+" <-- "+Switch_Mode+"(修改模式操作)");
-}
-
-//修改IC卡A或者B密码
-void MainWindow::IC_Change_Pass()
-{
-    QByteArray Send_Data;
-    QString Pass[2];
-    if(ui->IC_lineEdit_Pass->text().isEmpty())
-    {
-        QMessageBox::warning(this,"提示","密码不能为空！");
-    }
-    else if(ui->IC_lineEdit_Pass->text().length() < 12)
-    {
-        QMessageBox::warning(this,"提示","密码不能少于12位！");
-    }
-    else
-    {
-        Pass[0] = "AF 06 0E ";
-        Pass[1] = Add_Space(0,ui->IC_lineEdit_Pass->text());
-        QString Data = Pass[0] + Pass[1];
-        Data = Data+Get_Xor(3,3,Data);
-        StringToHex(Data,Send_Data);
-        Serial.write(Send_Data);
-        Send_Num += Serial.bytesToWrite();
-        ui->label_Send_Num->setText(QString::number(Send_Num));
-        if(Show_Mode != 2 && !IsStop && IsOpen)
-            ui->textEdit_Data->append(Time_str+" <-- "+Data+"(同步密码操作)");
-    }
-}
-
-//票价保存
-void MainWindow::IC_App_Ticket_Save()
-{
-    QByteArray Send_Data;
-    QString Ticket_Save[5];
-    Ticket_Save[0] = "AF";
-    Ticket_Save[1] = " 02 0C ";
-
-    QString Ticket_Save2_H,Ticket_Save2_L;
-    if(ui->IC_lineEdit_App_Ticket->text().isEmpty())
-    {
-        QMessageBox::warning(this,"提示","票价不能为空！");
-    }
-    else if(ui->IC_lineEdit_App_Ticket->text().toInt(0,10) > 65535)
-    {
-        QMessageBox::warning(this,"提示","设置的票价请不要超过65535元！");
-    }
-    else
-    {
-        Ticket_Int = ui->IC_lineEdit_App_Ticket->text().toInt(0,10);
-        Ticket_Save[2] = QString::number(Ticket_Int,16);
-        if(Ticket_Int == 0)
-        {
-            Ticket_Save[2] = "00 00";
-        }
-        else if(Ticket_Int <= 255 && Ticket_Int > 0)
-        {
-            Ticket_Save2_H = "00 ";
-            Ticket_Save2_L = Ticket_Save[2].mid(0,2);
-            if(Ticket_Save2_L.toInt(0,16) <= 15)
-                Ticket_Save2_L = "0"+Ticket_Save2_L;
-            Ticket_Save[2] = Ticket_Save2_H+Ticket_Save2_L;
-        }
-        else if(Ticket_Int <= 4095 && Ticket_Int > 255)
-        {
-
-            Ticket_Save2_H = "0"+Ticket_Save[2].mid(0,1);
-            Ticket_Save2_L = " "+Ticket_Save[2].mid(1,2);
-            Ticket_Save[2] = Ticket_Save2_H+Ticket_Save2_L;
-        }
-        else
-        {
-            Ticket_Save2_H = Ticket_Save[2].mid(0,2);
-            if(Ticket_Save2_H.toInt(0,16) <= 15)
-                Ticket_Save2_H = "0"+Ticket_Save2_H;
-            Ticket_Save2_L = " "+Ticket_Save[2].mid(2,2);
-            Ticket_Save[2] = Ticket_Save2_H+Ticket_Save2_L;
-        }
-        QString Data = Ticket_Save[1]+Ticket_Save[2];
-        char Data_Hex = 0;
-        for(int a=1; a<Data.length(); a+=3)
-        {
-            int Data_Int = Data.mid(a,2).toInt(0,16);               //将组合数据分解
-            Data_Hex ^= (Data_Int%256)&0xFF;                        //将十进制转换为十六进制异或
-        }
-        QString Data_Fcs = QString::number(Data_Hex,16).right(2);           //提取异或后的结果最后两位
-        int Data_Fcs_Int = Data_Fcs.toInt(0,16);
-        if(Data_Fcs_Int <= 15)
-            Data_Fcs = '0'+Data_Fcs;
-        Data = Ticket_Save[0]+Data+" "+Data_Fcs;
-        StringToHex(Data,Send_Data);
-        Serial.write(Send_Data);
-        Send_Num += Serial.bytesToWrite();
-        ui->label_Send_Num->setText(QString::number(Send_Num));
-        if(Show_Mode != 2 && !IsStop && IsOpen)
-            ui->textEdit_Data->append(Time_str+" <-- "+Data.toUpper()+"(修改票价操作)");
-        IC_App_Down_Ok = false;
-    }
-}
-
-//发送余额
-void MainWindow::IC_App_Send_Balance()
-{
-    QByteArray Send_Data;
-    QString BaLance[5];
-    BaLance[0] = "AF";
-    BaLance[1] = " 03 0B ";
-    QString BaLance2_S,BaLance2_H,BaLance2_L;
-    BaLance[2] = QString::number(Balance_Int,16);
-    if(Balance_Int == 0)
-    {
-        BaLance[2] = "00 00 00";
-    }
-    else if(Balance_Int <= 255 && Balance_Int > 0)
-    {
-        BaLance2_H = "00 00 ";
-        BaLance2_L = BaLance[2].mid(0,2);
-        if(BaLance2_L.toInt(0,16) <= 15)
-            BaLance2_L = "0"+BaLance2_L;
-        BaLance[2] = BaLance2_H+BaLance2_L;
-    }
-    else if(Balance_Int <= 4095 && Balance_Int > 255)
-    {
-        BaLance2_H = "00 0"+BaLance[2].mid(0,1);
-        BaLance2_L = " "+BaLance[2].mid(1,2);
-        BaLance[2] = BaLance2_H+BaLance2_L;
-    }
-    else if(Balance_Int <= 65535 && Balance_Int > 4095)
-    {
-        BaLance2_H = "00 "+BaLance[2].mid(0,2);
-        BaLance2_L = " "+BaLance[2].mid(2,2);
-        BaLance[2] = BaLance2_H+BaLance2_L;
-    }
-    else if(Balance_Int <= 1048575 && Balance_Int > 65535)
-    {
-        BaLance2_S = "0"+BaLance[2].mid(0,1);
-        BaLance2_H = " "+BaLance[2].mid(1,2);
-        BaLance2_L = " "+BaLance[2].mid(3,2);
-        BaLance[2] = BaLance2_S+BaLance2_H+BaLance2_L;
-    }
-    else
-    {
-        BaLance2_S = BaLance[2].mid(0,2);
-        BaLance2_H = " "+BaLance[2].mid(2,2);
-        BaLance2_L = " "+BaLance[2].mid(4,2);
-        BaLance[2] = BaLance2_S+BaLance2_H+BaLance2_L;
-    }
-    QString Data = BaLance[1]+BaLance[2];
-
-    char Data_Hex = 0;
-    for(int a=1; a<Data.length(); a+=3)
-    {
-        int Data_Int = Data.mid(a,2).toInt(0,16);               //将组合数据分解
-        Data_Hex ^= (Data_Int%256)&0xFF;                        //将十进制转换为十六进制异或
-    }
-    QString Data_Fcs = QString::number(Data_Hex,16).right(2);           //提取异或后的结果最后两位
-    int Data_Fcs_Int = Data_Fcs.toInt(0,16);
-    if(Data_Fcs_Int <= 15)
-        Data_Fcs = '0'+Data_Fcs;
-    Data = BaLance[0]+Data+" "+Data_Fcs;
-    StringToHex(Data,Send_Data);
-    Serial.write(Send_Data);
-    Send_Num += Serial.bytesToWrite();
-    ui->label_Send_Num->setText(QString::number(Send_Num));
-    if(Show_Mode != 2 && !IsStop && IsOpen)
-        ui->textEdit_Data->append(Time_str+" <-- "+Data.toUpper()+"(修改余额操作)");
-}
-
-//数据复位
-void MainWindow::IC_Ticket_Reset()
-{
-    gross = 0;
-    ui->IC_label_Head_Money->setFont(QFont("",15,QFont::Bold));
-    ui->IC_label_Head_Money->setText("0");
-}
-
-//充值
-void MainWindow::IC_App_Up_Money()
-{
-    unsigned long Up_Balance;
-    if(ui->IC_lineEdit_App_Up_Money->text().isEmpty())
-    {
-        QMessageBox::warning(this,"提示","充值金额不能为空！");
-    }
-    else
-    {
-        Up_Balance = ui->IC_lineEdit_App_Up_Money->text().toInt(nullptr,10);
-        if(Up_Balance+Balance_Int > 16777215)
-        {
-            QMessageBox::warning(this,"提示","最大余额不能超过16777215元！");
-        }
-        else
-        {
-            Balance_Int += Up_Balance;
-            IC_App_Send_Balance();
-            IC_App_Down_Ok = false;
-            IC_IsUp = true;
-        }
-    }
-}
-
-//扣费
-void MainWindow::IC_App_Down_Money()
-{
-    if(!IC_Bus_Mode)
-    {
-        if(Balance_Int-Ticket_Int < 0)
-        {
-            IC_App_Down_Ok = true;
-            QMessageBox::warning(this,"提示","余额不足！请充值！");
-        }
-        else
-        {
-            Balance_Int -= Ticket_Int;
-            IC_App_Send_Balance();
-            IC_IsUp = false;
-        }
-    }
-}
-
 void MainWindow::on_IC_comboBox_Sys_Lump_activated(int index)
 {
     // index 表示那个块
@@ -1888,7 +1140,6 @@ void MainWindow::on_IC_radioButton_Pass_A_clicked(bool checked)
         return;
 }
 
-
 /**
 * @funcname      get_Data
 * @brief         按要求处理串口数据（根据数据长度）
@@ -1939,8 +1190,6 @@ void MainWindow::Uart_DataHandle(unsigned char lastLen, unsigned char addLen)
             ID_Data = HandleData;
         else if(Mode == 2)
             IC_Data = HandleData;
-        else if(Mode == 3)
-            ETC_Data = HandleData;
         Uart_DataBuff = Uart_DataBuff.remove(HandleData);
     }
     else
@@ -1979,5 +1228,3 @@ void MainWindow::on_IC_lineEdit_Sys_Write_textChanged(const QString &arg1)
     }
     space_number = ui->IC_lineEdit_Sys_Write->text().count(' ');
 }
-
-
