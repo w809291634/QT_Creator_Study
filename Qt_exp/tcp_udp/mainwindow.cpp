@@ -11,6 +11,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_Tcp_ClientList.reset(new QList<QTcpSocket *>);
     m_TcpServer = new QTcpServer(this);
 
+
     ui->tcp_s_close_btn->setEnabled(false);
 
     // QNetworkInterface 类提供主机的 IP 地址和网络接口的列表
@@ -25,7 +26,6 @@ MainWindow::MainWindow(QWidget *parent) :
             {
                 QString ip = entry.ip().toString();
                 ui->tcp_s_ip_cbox->addItem(ip);
-                ui->tcp_c_ip_cbox->addItem(ip);
             }
         }
     }
@@ -39,11 +39,12 @@ MainWindow::MainWindow(QWidget *parent) :
     // 更新 已连接 客户端的信息
     QTimer* temp_Timer = new QTimer(this);
     connect(temp_Timer, SIGNAL(timeout()), this, SLOT(tcp_s_update_ClientInfo()));
-    temp_Timer->start(100);
+    temp_Timer->start(1000);
 
 
     /* TCP客户端 */
     m_TcpClient = new QTcpSocket(this);
+
     ui->tcp_c_disconnect_btn->setEnabled(false);
     connect(m_TcpClient,SIGNAL(stateChanged(QAbstractSocket::SocketState)),
             this,SLOT(tcp_c_SocketState_Changed(QAbstractSocket::SocketState)));
@@ -59,14 +60,17 @@ MainWindow::~MainWindow()
 // 监听开始 按钮触发
 void MainWindow::on_tcp_s_listen_btn_clicked()
 {
-    ui->tcp_s_listen_btn->setEnabled(false);
-    ui->tcp_s_close_btn->setEnabled(true);
-
     QHostAddress ip_add(ui->tcp_s_ip_cbox->currentText());
     unsigned short port = ui->tcp_s_port_ledit->text().toUShort();
 
     // 服务器开始监听
-    m_TcpServer->listen(ip_add, port);
+    if(m_TcpServer->listen(ip_add, port)){
+        ui->tcp_s_listen_btn->setEnabled(false);
+        ui->tcp_s_close_btn->setEnabled(true);
+
+    }else{
+
+    }
 }
 
 // 监听停止 按钮触发
@@ -90,6 +94,9 @@ void MainWindow::tcp_s_newConnection_trigger()
 {
     bool socket_added=false;
     QTcpSocket* temp_socket=m_TcpServer->nextPendingConnection();
+    qDebug()<<"server socket localAddress"<<temp_socket->localAddress();
+    qDebug()<<"server socket peerAddress"<<temp_socket->peerAddress();
+
     foreach(auto Client,*m_Tcp_ClientList.data()){
         if(Client->peerAddress()==temp_socket->peerAddress()){
             socket_added=true;
@@ -140,6 +147,7 @@ void MainWindow::tcp_s_update_ClientInfo()
             ui->tcp_s_select_cbox->addItem(Client->peerAddress().toString());
         }
     }
+//    qDebug()<<m_TcpServer->isListening();
 }
 
 // 套接字 状态变化
@@ -153,7 +161,7 @@ void MainWindow::tcp_s_SocketState_Changed(QAbstractSocket::SocketState SocketSt
 
 void MainWindow::on_tcp_c_connect_btn_clicked()
 {
-    QString ip = ui->tcp_c_ip_cbox->currentText();
+    QString ip = ui->tcp_c_ip_ledit->text();
     unsigned short port = ui->tcp_c_port_ledit->text().toUShort();
 
     // 连接服务器
@@ -201,6 +209,8 @@ void MainWindow::tcp_c_SocketState_Changed(QAbstractSocket::SocketState SocketSt
         qDebug()<<"tcp_c ConnectedState";
         ui->tcp_c_connect_btn->setEnabled(false);
         ui->tcp_c_disconnect_btn->setEnabled(true);
+        qDebug()<<"client socket localAddress"<<m_TcpClient->localAddress();
+        qDebug()<<"client socket peerAddress"<<m_TcpClient->peerAddress();
         break;
 
     case QAbstractSocket::BoundState:
