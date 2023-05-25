@@ -17,6 +17,12 @@
 #include <QTcpSocket>
 //UDP
 #include <QUdpSocket>
+#include <QMessageBox>
+
+#define FIRST_IP_ARRDESS                {"192.168.100",\
+                                        "192.168.31"}       // 服务器端 想监听的 优先地址
+#define TCP_SERVER_MAX_CONNECTIONS      30
+#define TCP_CONNECTING_TIMEOUT          5                  // 客户端 TCP 连接超时时间，单位s
 
 namespace Ui {
 class MainWindow;
@@ -31,11 +37,14 @@ public:
     ~MainWindow();
 
 private slots:
+    void menu_clicked();
+
     /* TCP服务器 */
     void on_tcp_s_listen_btn_clicked();
     void on_tcp_s_close_btn_clicked();
     void on_tcp_s_send_btn_clicked();
     void on_tcp_s_history_clear_clicked();
+    void on_tcp_s_unconnect_btn_clicked();
 
     // 连接和数据读写
     void tcp_s_newConnection_trigger();
@@ -63,6 +72,7 @@ private slots:
     // 获取信息
     void tcp_c_SocketState_Changed(QAbstractSocket::SocketState SocketState);
     void tcp_c_Connecting();
+    void tcp_c_Connecting_timeout();
     void tcp_c_Connected();
     void tcp_c_Unconnected();
     void tcp_c_clear();
@@ -75,9 +85,9 @@ private:
     QTimer* m_stimer;
 
     /* TCP客户端 */
-    QTcpSocket * m_TcpClient;
-    QTimer* m_ctimer;
-    QTimer* m_timeout_timer;
+    QTcpSocket * m_TcpClient=static_cast<QTcpSocket*>(nullptr);
+    QTimer* m_ctimer=static_cast<QTimer*>(nullptr);
+    QTimer* m_timeout_timer=static_cast<QTimer*>(nullptr);
 };
 
 #endif // MAINWINDOW_H
