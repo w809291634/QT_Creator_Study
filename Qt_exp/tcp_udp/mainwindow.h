@@ -18,8 +18,6 @@
 //UDP
 #include <QUdpSocket>
 
-#define TCP_SERVER_MAX_CONNECTIONS   30
-
 namespace Ui {
 class MainWindow;
 }
@@ -64,6 +62,7 @@ private slots:
 
     // 获取信息
     void tcp_c_SocketState_Changed(QAbstractSocket::SocketState SocketState);
+    void tcp_c_Connecting();
     void tcp_c_Connected();
     void tcp_c_Unconnected();
     void tcp_c_clear();
@@ -78,6 +77,7 @@ private:
     /* TCP客户端 */
     QTcpSocket * m_TcpClient;
     QTimer* m_ctimer;
+    QTimer* m_timeout_timer;
 };
 
 #endif // MAINWINDOW_H

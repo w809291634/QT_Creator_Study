@@ -1,7 +1,9 @@
 ﻿#include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-#define FIRST_IP_ARRDESS  "192.168.100"                 // 服务器端 需要的首地址
+#define FIRST_IP_ARRDESS                "192.168.100"       // 服务器端 需要的首地址
+#define TCP_SERVER_MAX_CONNECTIONS      30
+#define TCP_CONNECTING_TIMEOUT          5                   // TCP 连接超时时间
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -13,6 +15,7 @@ MainWindow::MainWindow(QWidget *parent) :
     /******* TCP服务器 *******/
     m_Tcp_ClientList.reset(new QList<QTcpSocket *>);
     m_TcpServer = new QTcpServer(this);
+    m_TcpServer->setMaxPendingConnections(TCP_SERVER_MAX_CONNECTIONS);
 
     // 服务端 UI 初始化
     tcp_s_clear();
@@ -239,6 +242,7 @@ void MainWindow::tcp_s_SocketState_Changed(QAbstractSocket::SocketState SocketSt
 
     switch(SocketState){
     case QAbstractSocket::UnconnectedState:
+        qDebug()<<"tcp_s UnconnectedState";
         m_Tcp_ClientList->removeOne(temp_socket);
         ui->tcp_server_listWidget->
                 addItem(QString("IP地址:%1 端口:%2 已断开服务器")
@@ -256,6 +260,7 @@ void MainWindow::tcp_s_SocketState_Changed(QAbstractSocket::SocketState SocketSt
         break;
 
     case QAbstractSocket::ConnectedState:
+        qDebug()<<"tcp_s ConnectedState";
         if(!m_Tcp_ClientList->contains(temp_socket))
             m_Tcp_ClientList->append(temp_socket);
         break;
@@ -282,10 +287,22 @@ void MainWindow::tcp_s_clear()
 
 /*************** TCP客户端 ***************/
 // TCP 客户端 连接成功后的UI变化
+void MainWindow::tcp_c_Connecting()
+{
+    ui->tcp_c_ip_ledit->setText("连接服务器中...");
+    ui->tcp_c_port_ledit->setText("连接服务器中...");
+    ui->tcp_c_connect_btn->setEnabled(false);
+    ui->tcp_cs_ip_ledit->setEnabled(false);
+    ui->tcp_cs_port_ledit->setEnabled(false);
+    ui->tcp_c_disconnect_btn->setEnabled(true);
+    ui->tcp_c_send_btn->setEnabled(true);
+}
+
 void MainWindow::tcp_c_Connected()
 {
     ui->tcp_c_ip_ledit->setEnabled(false);
     ui->tcp_c_port_ledit->setEnabled(false);
+
     ui->tcp_c_ip_ledit->setText(m_TcpClient->localAddress().toString());
     ui->tcp_c_port_ledit->setText(QString("%1").arg(m_TcpClient->localPort()));
 
@@ -294,6 +311,9 @@ void MainWindow::tcp_c_Connected()
     ui->tcp_cs_port_ledit->setEnabled(false);
     ui->tcp_c_disconnect_btn->setEnabled(true);
     ui->tcp_c_send_btn->setEnabled(true);
+
+    ui->tcp_client_listWidget->addItem("已连接服务器");
+    ui->tcp_client_listWidget->scrollToBottom();
 }
 
 // TCP 客户端 连接失败后的UI变化
@@ -309,6 +329,9 @@ void MainWindow::tcp_c_Unconnected()
     ui->tcp_cs_port_ledit->setEnabled(true);
     ui->tcp_c_disconnect_btn->setEnabled(false);
     ui->tcp_c_send_btn->setEnabled(false);
+
+    ui->tcp_client_listWidget->addItem("已断开服务器");
+    ui->tcp_client_listWidget->scrollToBottom();
 }
 
 // 触发连接服务器
@@ -324,9 +347,7 @@ void MainWindow::on_tcp_c_connect_btn_clicked()
 // 触发断开连接服务器
 void MainWindow::on_tcp_c_disconnect_btn_clicked()
 {
-    ui->tcp_c_connect_btn->setEnabled(true);
-    ui->tcp_c_disconnect_btn->setEnabled(false);
-
+    m_TcpClient->abort();
     m_TcpClient->disconnectFromHost();
 }
 
@@ -378,9 +399,8 @@ void MainWindow::tcp_c_SocketState_Changed(QAbstractSocket::SocketState SocketSt
 {
     switch(SocketState){
     case QAbstractSocket::UnconnectedState:
+        qDebug()<<"tcp_c UnconnectedState";
         tcp_c_Unconnected();
-        ui->tcp_client_listWidget->addItem("已断开服务器");
-        ui->tcp_client_listWidget->scrollToBottom();
         break;
 
     case QAbstractSocket::HostLookupState:
@@ -388,13 +408,13 @@ void MainWindow::tcp_c_SocketState_Changed(QAbstractSocket::SocketState SocketSt
         break;
 
     case QAbstractSocket::ConnectingState:
+        tcp_c_Connecting();
         qDebug()<<"tcp_c ConnectingState";
         break;
 
     case QAbstractSocket::ConnectedState:
+        qDebug()<<"tcp_c ConnectedState";
         tcp_c_Connected();
-        ui->tcp_client_listWidget->addItem("已连接服务器");
-        ui->tcp_client_listWidget->scrollToBottom();
         break;
 
     case QAbstractSocket::BoundState:
@@ -406,6 +426,7 @@ void MainWindow::tcp_c_SocketState_Changed(QAbstractSocket::SocketState SocketSt
         break;
 
     case QAbstractSocket::ClosingState:
+        qDebug()<<"tcp_c ClosingState";
         tcp_c_Unconnected();
         break;
     }
