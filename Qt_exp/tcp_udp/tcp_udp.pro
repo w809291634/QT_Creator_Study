@@ -27,7 +27,8 @@ CONFIG += c++11
 SOURCES += \
         main.cpp \
         mainwindow.cpp \
-    tcp.cpp
+    tcp.cpp \
+    udp.cpp
 
 HEADERS += \
         mainwindow.h

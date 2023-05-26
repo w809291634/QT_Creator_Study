@@ -8,6 +8,7 @@
 #include <QMainWindow>
 #include <QtCore>
 #include <QtNetwork>
+#include <QMessageBox>
 //info
 #include <QNetworkInterface>
 #include <QHostInfo>
@@ -17,7 +18,7 @@
 #include <QTcpSocket>
 //UDP
 #include <QUdpSocket>
-#include <QMessageBox>
+#include <QNetworkDatagram>
 
 #define FIRST_IP_ARRDESS                {"192.168.100",\
                                         "192.168.31"}       // 服务器端 想监听的 优先地址
@@ -27,6 +28,25 @@
 namespace Ui {
 class MainWindow;
 }
+
+class destination_add
+{
+public:
+    destination_add(){}
+    ~destination_add(){}
+
+    QString peerAddress_port;
+    QHostAddress peerAddress;
+    quint16 peerPort;
+
+    friend bool operator==(const destination_add & A, const destination_add & B){
+        if(A.peerPort==B.peerPort
+                && A.peerAddress==B.peerAddress
+                && A.peerAddress_port==B.peerAddress_port){
+            return 1;
+        }else return 0;
+    }
+};
 
 class MainWindow : public QMainWindow
 {
@@ -38,13 +58,15 @@ public:
 
 private slots:
     void menu_clicked();
+    void init_TCP();
+    void init_UDP();
 
-    /* TCP服务器 */
+    /********* TCP服务器 *********/
     void on_tcp_s_listen_btn_clicked();
     void on_tcp_s_close_btn_clicked();
+    void on_tcp_s_unconnect_btn_clicked();
     void on_tcp_s_send_btn_clicked();
     void on_tcp_s_history_clear_clicked();
-    void on_tcp_s_unconnect_btn_clicked();
 
     // 连接和数据读写
     void tcp_s_newConnection_trigger();
@@ -58,8 +80,9 @@ private slots:
     void tcp_s_listening();
     void tcp_s_listen_close();
     void tcp_s_clear();
+    QString TCP_getLocalIP();
 
-    /* TCP客户端 */
+    /********* TCP客户端 *********/
     void on_tcp_c_connect_btn_clicked();
     void on_tcp_c_disconnect_btn_clicked();
     void on_tcp_c_send_btn_clicked();
@@ -77,6 +100,32 @@ private slots:
     void tcp_c_Unconnected();
     void tcp_c_clear();
 
+    /********* UDP *********/
+    void on_udp_bind_btn_clicked();
+    void on_udp_unbind_btn_clicked();
+    void on_udp_join_multi_btn_clicked();
+    void on_udp_leave_multi_btn_clicked();
+    void on_udp_history_clear_clicked();
+
+    // 数据读写
+    void Udp_SocketReadyRead();
+
+    // 获取信息
+    void Udp_SocketStateChanged(QAbstractSocket::SocketState SocketState);
+    QString UDP_getLocalIP();
+
+
+    // 状态
+    void Udp_Init_Ui();
+    void Udp_SocketBind();
+    void Udp_SocketUnBind();
+    void Udp_SocketJoinMulti();
+    void Udp_SocketLeaveMulti();
+    void Udp_Destination_Update();
+
+
+
+
 private:
     Ui::MainWindow *ui;
     /* TCP服务器 */
@@ -88,6 +137,11 @@ private:
     QTcpSocket * m_TcpClient=static_cast<QTcpSocket*>(nullptr);
     QTimer* m_ctimer=static_cast<QTimer*>(nullptr);
     QTimer* m_timeout_timer=static_cast<QTimer*>(nullptr);
+
+    /* UDP */
+    QUdpSocket * m_pUdpSocket;
+    QSharedPointer<QList<destination_add>> m_destination_add_p;       // 保存
+
 };
 
 #endif // MAINWINDOW_H

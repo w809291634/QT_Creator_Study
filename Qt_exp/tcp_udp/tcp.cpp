@@ -1,6 +1,44 @@
 ﻿#include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+// 获取 本地 能够 监听的地址
+QString MainWindow::TCP_getLocalIP()
+{
+    QString Priority_ip;
+    QList<QNetworkInterface> list = QNetworkInterface::allInterfaces();
+    foreach (QNetworkInterface interface, list)
+    {
+        QList<QNetworkAddressEntry> entryList= interface.addressEntries();
+        foreach (QNetworkAddressEntry entry, entryList)
+        {
+            //过滤 IPv6 地址，只留下 IPv4
+            if (entry.ip().protocol() ==QAbstractSocket::IPv4Protocol)
+            {
+                QHostAddress ip = entry.ip();
+                //  筛选出能够监听的 ip地址
+                if(m_TcpServer->listen(ip)){
+                    char _flag=0;
+                    m_TcpServer->close();
+                    // 将优先地址 排在 前面
+                    for(auto _ip:FIRST_IP_ARRDESS){
+                        if(ip.toString().contains(_ip)){
+                            ui->tcp_s_ip_cbox->insertItem(0,ip.toString());
+                            Priority_ip=ip.toString();
+                            _flag=1;
+                            break;
+                        }
+                    }
+                    // 不在优先选择地址，放在队列尾部
+                    if(!_flag)
+                        ui->tcp_s_ip_cbox->addItem(ip.toString());
+                }
+            }
+        }
+    }
+    ui->tcp_s_ip_cbox->setCurrentIndex(0);
+    return Priority_ip;
+}
+
 /*************** TCP服务器 ***************/
 // 服务器 开启监听后的 UI变化
 void MainWindow::tcp_s_listening()
@@ -39,6 +77,7 @@ void MainWindow::on_tcp_s_listen_btn_clicked()
         tcp_s_listening();
     }else{
         tcp_s_listen_close();
+        QMessageBox::warning(this,"监听失败","请检查服务器IP地址或者端口是否占用","确认");
     }
 }
 
@@ -55,6 +94,7 @@ void MainWindow::on_tcp_s_unconnect_btn_clicked()
     foreach(auto Client,*m_Tcp_ClientList.data()){
         Client->abort();                // 终止连接
         Client->close();
+        delete Client;                  // 释放内存
     }
     m_Tcp_ClientList->clear();          // 清理所有的存储套接字
 }
