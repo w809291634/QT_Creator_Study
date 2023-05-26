@@ -122,6 +122,9 @@ void MainWindow::init_UDP()
 {
     m_pUdpSocket = new QUdpSocket(this);
     m_destination_add_p.reset(new QList<destination_add>);
+    dest_update_timer= new QTimer(this);
+    connect(dest_update_timer, SIGNAL(timeout()), this, SLOT(Udp_Destination_Update()));
+    dest_update_timer->start(100);
 
     // 显示初始 UI
     Udp_Init_Ui();
@@ -150,6 +153,11 @@ QString MainWindow::UDP_getLocalIP()
             if (entry.ip().protocol() ==QAbstractSocket::IPv4Protocol)
             {
                 QHostAddress ip = entry.ip();
+                destination_add _dest;
+                _dest.peerAddress=QHostAddress(ip.toString());
+                _dest.peerAddress_port=ip.toString()+",9090";
+                _dest.peerPort=9090;
+
                 //  筛选出能够监听的 ip地址
                 if(m_pUdpSocket->bind(ip)){
                     char _flag=0;
@@ -158,7 +166,9 @@ QString MainWindow::UDP_getLocalIP()
                     for(auto _ip:FIRST_IP_ARRDESS){
                         if(ip.toString().contains(_ip)){
                             ui->udp_bind_ip_cbox->insertItem(0,ip.toString());
-                            ui->udp_destination_ip_cbox->insertItem(0,ip.toString());
+                            if(m_destination_add_p!=nullptr){
+                                m_destination_add_p->append(_dest);
+                            }
                             Priority_ip=ip.toString();
                             _flag=1;
                             break;
@@ -167,13 +177,15 @@ QString MainWindow::UDP_getLocalIP()
                     // 不在优先选择地址，放在队列尾部
                     if(!_flag){
                         ui->udp_bind_ip_cbox->addItem(ip.toString());
-                        ui->udp_destination_ip_cbox->addItem(ip.toString());
+                        if(m_destination_add_p!=nullptr){
+                            m_destination_add_p->append(_dest);
+                        }
                     }
                 }
             }
         }
     }
-    ui->udp_destination_ip_cbox->setCurrentIndex(0);
+    ui->udp_destination_cbox->setCurrentIndex(0);
     ui->udp_bind_ip_cbox->setCurrentIndex(0);
     return Priority_ip;
 }
@@ -199,9 +211,7 @@ void MainWindow::Udp_Init_Ui()
     ui->udp_group_port_sbox->setValue(9090);
 
     // 发送目的地址 IP 和 端口的 ui 设置
-    ui->udp_destination_port_cbox->setEditable(true);
-    ui->udp_destination_port_cbox->setValidator(new QIntValidator(0, 65535,this));
-
+    ui->udp_destination_cbox->setEditable(true);
 }
 
 // UDP 绑定状态
@@ -250,8 +260,21 @@ void MainWindow::Udp_SocketLeaveMulti()
 
 void MainWindow::Udp_Destination_Update()
 {
-
-
+    static int last_len=-1;
+    if(m_destination_add_p!=nullptr){
+        int len=m_destination_add_p->length();
+        if(len!=last_len){
+            // 需要 更新显示
+            last_len=len;
+            // 先 清理 后添加
+            ui->udp_destination_cbox->clear();
+            foreach(auto destination,*m_destination_add_p.data()){
+                if(destination.is_vaild()){
+                    ui->udp_destination_cbox->addItem(destination.peerAddress_port);
+                }
+            }
+        }
+    }
 }
 
 /******* 按钮槽函数 *******/
@@ -283,22 +306,33 @@ void MainWindow::on_udp_leave_multi_btn_clicked()
 
 }
 
-// 读数据
-void MainWindow::Udp_SocketReadyRead()
+// 单播
+void MainWindow::on_udp_unicast_btn_clicked()
 {
-    while (m_pUdpSocket->hasPendingDatagrams()) {
-        QByteArray dataGram;
-        dataGram.resize(static_cast<int>(m_pUdpSocket->pendingDatagramSize()));
-        destination_add dest_add;
-        m_pUdpSocket->readDatagram(dataGram.data(), dataGram.size(), &dest_add.peerAddress, &dest_add.peerPort);
-        dest_add.peerAddress_port=QString("%1,%2").arg(dest_add.peerAddress.toString()).arg(dest_add.peerPort);
-        if(!m_destination_add_p->contains(dest_add)){
-            m_destination_add_p->append(dest_add);
+    QByteArray msg = ui->udp_send_textEdit->toPlainText().toUtf8();
+    //目标地址和端口
+    QString target = ui->udp_destination_cbox->currentText();
+    foreach(auto destination,*m_destination_add_p.data()){
+        if(target==destination.peerAddress_port){
+            m_pUdpSocket->writeDatagram(msg, destination.peerAddress, destination.peerPort);
         }
-        QString msg = dataGram.data();
-        ui->udp_listWidget->addItem(QString("站点(ip:%1 port:%2)-->%3").arg(dest_add.peerAddress.toString()).arg(dest_add.peerPort).arg(msg));
-        ui->udp_listWidget->scrollToBottom();
     }
+
+
+//    m_pPlainText->appendPlainText("[out] " + msg);
+//    m_pLineEdit->clear();
+//    m_pLineEdit->setFocus();
+
+}
+
+void MainWindow::on_udp_broadcast_btn_clicked()
+{
+
+}
+
+void MainWindow::on_udp_multicast_btn_clicked()
+{
+
 }
 
 // 清理历史
@@ -307,7 +341,30 @@ void MainWindow::on_udp_history_clear_clicked()
     ui->udp_listWidget->clear();
 }
 
+/******* 数据和状态 *******/
 
+// 读数据
+void MainWindow::Udp_SocketReadyRead()
+{
+    while(m_pUdpSocket->hasPendingDatagrams()) {
+        QByteArray dataGram;
+        dataGram.resize(static_cast<int>(m_pUdpSocket->pendingDatagramSize()));
+        destination_add dest_add;
+        // 读取数据
+        m_pUdpSocket->readDatagram(dataGram.data(), dataGram.size(), &dest_add.peerAddress, &dest_add.peerPort);
+        dest_add.peerAddress_port=QString("%1,%2")
+                .arg(dest_add.peerAddress.toString())
+                .arg(dest_add.peerPort);
+        // 如果没有储存 进行储存
+        if(!m_destination_add_p->contains(dest_add)){
+            m_destination_add_p->append(dest_add);
+        }
+        // 获取 数据报 里面的数据
+        QString msg = dataGram.data();
+        ui->udp_listWidget->addItem(QString("站点(ip:%1 port:%2)-->%3").arg(dest_add.peerAddress.toString()).arg(dest_add.peerPort).arg(msg));
+        ui->udp_listWidget->scrollToBottom();
+    }
+}
 
 // 套接字 状态变化
 void MainWindow::Udp_SocketStateChanged(QAbstractSocket::SocketState SocketState)
@@ -342,6 +399,8 @@ void MainWindow::Udp_SocketStateChanged(QAbstractSocket::SocketState SocketState
         break;
     }
 }
+
+
 
 
 

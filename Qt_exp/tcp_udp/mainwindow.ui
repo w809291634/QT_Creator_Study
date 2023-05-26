@@ -6,9 +6,21 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>676</width>
+    <width>672</width>
     <height>693</height>
    </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>672</width>
+    <height>0</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>16777215</width>
+    <height>16777215</height>
+   </size>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
@@ -17,6 +29,12 @@
    <layout class="QGridLayout" name="gridLayout_10">
     <item row="0" column="0">
      <widget class="QStackedWidget" name="stackedWidget">
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>16777215</height>
+       </size>
+      </property>
       <property name="currentIndex">
        <number>1</number>
       </property>
@@ -25,7 +43,7 @@
         <item row="0" column="0">
          <widget class="QTabWidget" name="tabWidget">
           <property name="currentIndex">
-           <number>0</number>
+           <number>1</number>
           </property>
           <widget class="QWidget" name="TCP_Server_widget">
            <attribute name="title">
@@ -749,6 +767,33 @@ p, li { white-space: pre-wrap; }
            <string>发送的信息</string>
           </property>
           <layout class="QGridLayout" name="gridLayout">
+           <item row="2" column="1">
+            <widget class="QPushButton" name="udp_broadcast_btn">
+             <property name="text">
+              <string>发送广播信息</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <spacer name="horizontalSpacer_16">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>499</width>
+               <height>25</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item row="3" column="1">
+            <widget class="QPushButton" name="udp_multicast_btn">
+             <property name="text">
+              <string>发送组播信息</string>
+             </property>
+            </widget>
+           </item>
            <item row="0" column="0" colspan="2">
             <widget class="QTextEdit" name="udp_send_textEdit">
              <property name="sizePolicy">
@@ -772,34 +817,37 @@ p, li { white-space: pre-wrap; }
              </property>
             </widget>
            </item>
+           <item row="3" column="0">
+            <spacer name="horizontalSpacer_11">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>499</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
            <item row="1" column="0" colspan="2">
             <layout class="QHBoxLayout" name="horizontalLayout_4">
              <item>
               <widget class="QLabel" name="label_20">
                <property name="text">
-                <string>目标地址：</string>
+                <string>目标地址和端口：</string>
                </property>
               </widget>
              </item>
              <item>
-              <widget class="QComboBox" name="udp_destination_ip_cbox">
+              <widget class="QComboBox" name="udp_destination_cbox">
                <property name="minimumSize">
                 <size>
-                 <width>150</width>
+                 <width>200</width>
                  <height>0</height>
                 </size>
                </property>
               </widget>
-             </item>
-             <item>
-              <widget class="QLabel" name="label_25">
-               <property name="text">
-                <string>端口：</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QComboBox" name="udp_destination_port_cbox"/>
              </item>
              <item>
               <spacer name="horizontalSpacer_12">
@@ -823,46 +871,6 @@ p, li { white-space: pre-wrap; }
              </item>
             </layout>
            </item>
-           <item row="2" column="0">
-            <spacer name="horizontalSpacer_16">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>499</width>
-               <height>25</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-           <item row="2" column="1">
-            <widget class="QPushButton" name="udp_broadcast_btn">
-             <property name="text">
-              <string>发送广播信息</string>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="0">
-            <spacer name="horizontalSpacer_11">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>499</width>
-               <height>20</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-           <item row="3" column="1">
-            <widget class="QPushButton" name="udp_multicast_btn">
-             <property name="text">
-              <string>发送组播信息</string>
-             </property>
-            </widget>
-           </item>
           </layout>
          </widget>
         </item>
@@ -877,7 +885,7 @@ p, li { white-space: pre-wrap; }
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>676</width>
+     <width>672</width>
      <height>26</height>
     </rect>
    </property>

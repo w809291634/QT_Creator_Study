@@ -46,6 +46,12 @@ public:
             return 1;
         }else return 0;
     }
+
+    bool is_vaild() const{
+        if(peerPort==0 && peerAddress_port.isEmpty() && peerAddress.toString().isNull())
+            return 0;
+        else return 1;
+    }
 };
 
 class MainWindow : public QMainWindow
@@ -106,6 +112,9 @@ private slots:
     void on_udp_join_multi_btn_clicked();
     void on_udp_leave_multi_btn_clicked();
     void on_udp_history_clear_clicked();
+    void on_udp_unicast_btn_clicked();
+    void on_udp_broadcast_btn_clicked();
+    void on_udp_multicast_btn_clicked();
 
     // 数据读写
     void Udp_SocketReadyRead();
@@ -126,6 +135,8 @@ private slots:
 
 
 
+
+
 private:
     Ui::MainWindow *ui;
     /* TCP服务器 */
@@ -140,8 +151,8 @@ private:
 
     /* UDP */
     QUdpSocket * m_pUdpSocket;
-    QSharedPointer<QList<destination_add>> m_destination_add_p;       // 保存
-
+    QSharedPointer<QList<destination_add>> m_destination_add_p=static_cast<QSharedPointer<QList<destination_add>>>(nullptr);      // 保存
+    QTimer* dest_update_timer;
 };
 
 #endif // MAINWINDOW_H
