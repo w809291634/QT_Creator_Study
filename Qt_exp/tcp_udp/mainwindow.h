@@ -29,17 +29,21 @@ namespace Ui {
 class MainWindow;
 }
 
-class destination_add
+class Peer_Address
 {
 public:
-    destination_add(){}
-    ~destination_add(){}
+    Peer_Address():
+    peerAddress_port("")
+    ,peerAddress(QHostAddress(""))
+    ,peerPort(0)
+    {}
+    ~Peer_Address(){}
 
     QString peerAddress_port;
     QHostAddress peerAddress;
     quint16 peerPort;
 
-    friend bool operator==(const destination_add & A, const destination_add & B){
+    friend bool operator==(const Peer_Address & A, const Peer_Address & B){
         if(A.peerPort==B.peerPort
                 && A.peerAddress==B.peerAddress
                 && A.peerAddress_port==B.peerAddress_port){
@@ -48,7 +52,7 @@ public:
     }
 
     bool is_vaild() const{
-        if(peerPort==0 && peerAddress_port.isEmpty() && peerAddress.toString().isNull())
+        if(peerPort==0 || peerAddress_port.isEmpty() || peerAddress.toString().isNull())
             return 0;
         else return 1;
     }
@@ -117,8 +121,11 @@ private slots:
     void on_udp_multicast_btn_clicked();
 
     // 数据读写
-    void Udp_SocketReadyRead();
-
+    void Udp_SocketRead();
+    void Udp_SocketWrite(const QByteArray &datagram,
+                         const QHostAddress &host,
+                         quint16 port,
+                         QString notes);
     // 获取信息
     void Udp_SocketStateChanged(QAbstractSocket::SocketState SocketState);
     QString UDP_getLocalIP();
@@ -137,6 +144,8 @@ private slots:
 
 
 
+    void on_udp_bind_bCast_btn_clicked();
+
 private:
     Ui::MainWindow *ui;
     /* TCP服务器 */
@@ -151,8 +160,12 @@ private:
 
     /* UDP */
     QUdpSocket * m_pUdpSocket;
-    QSharedPointer<QList<destination_add>> m_destination_add_p=static_cast<QSharedPointer<QList<destination_add>>>(nullptr);      // 保存
+    QSharedPointer<QList<Peer_Address>> m_Peer_Address_p=
+            static_cast<QSharedPointer<QList<Peer_Address>>>(nullptr);      // 保存 本站点 所有的 目的地址
     QTimer* dest_update_timer;
+    QHostAddress m_multicastAddr;
+    quint16 m_multicastPort;
+    bool m_Bound;
 };
 
 #endif // MAINWINDOW_H
