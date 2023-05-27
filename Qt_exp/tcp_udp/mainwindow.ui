@@ -622,11 +622,11 @@ p, li { white-space: pre-wrap; }
         <item row="0" column="0">
          <widget class="QTabWidget" name="tabWidget_2">
           <property name="currentIndex">
-           <number>1</number>
+           <number>0</number>
           </property>
-          <widget class="QWidget" name="tab">
+          <widget class="QWidget" name="broadcast">
            <attribute name="title">
-            <string>Tab 1</string>
+            <string>单播和组播</string>
            </attribute>
            <layout class="QGridLayout" name="gridLayout_11">
             <item row="0" column="0">
@@ -917,9 +917,9 @@ p, li { white-space: pre-wrap; }
             </item>
            </layout>
           </widget>
-          <widget class="QWidget" name="tab_2">
+          <widget class="QWidget" name="Multicast">
            <attribute name="title">
-            <string>Tab 2</string>
+            <string>组播</string>
            </attribute>
            <layout class="QGridLayout" name="gridLayout_9">
             <item row="0" column="0">
@@ -929,14 +929,14 @@ p, li { white-space: pre-wrap; }
                 <item>
                  <widget class="QLabel" name="label_29">
                   <property name="text">
-                   <string>绑定端口：</string>
+                   <string>绑定IP地址：</string>
                   </property>
                  </widget>
                 </item>
                 <item>
                  <widget class="QLabel" name="label_31">
                   <property name="text">
-                   <string>绑定广播端口：</string>
+                   <string>绑定端口：</string>
                   </property>
                  </widget>
                 </item>
@@ -947,12 +947,19 @@ p, li { white-space: pre-wrap; }
                   </property>
                  </widget>
                 </item>
+                <item>
+                 <widget class="QLabel" name="label_2">
+                  <property name="text">
+                   <string>组播端口：</string>
+                  </property>
+                 </widget>
+                </item>
                </layout>
               </item>
               <item>
                <layout class="QVBoxLayout" name="verticalLayout_8">
                 <item>
-                 <widget class="QComboBox" name="udp_bind_ip_cbox_3">
+                 <widget class="QComboBox" name="udp_bind_ip_cbox_2">
                   <property name="minimumSize">
                    <size>
                     <width>200</width>
@@ -962,10 +969,13 @@ p, li { white-space: pre-wrap; }
                  </widget>
                 </item>
                 <item>
-                 <widget class="QSpinBox" name="udp_bind_port_sbox_3"/>
+                 <widget class="QSpinBox" name="udp_bind_port_sbox_2"/>
                 </item>
                 <item>
-                 <widget class="QComboBox" name="udp_group_ip_cbox_2"/>
+                 <widget class="QComboBox" name="udp_group_ip_cbox"/>
+                </item>
+                <item>
+                 <widget class="QSpinBox" name="udp_group_port_cbox"/>
                 </item>
                </layout>
               </item>
@@ -989,7 +999,7 @@ p, li { white-space: pre-wrap; }
                 </property>
                 <layout class="QGridLayout" name="gridLayout_16">
                  <item row="1" column="0">
-                  <widget class="QLineEdit" name="udp_current_ip_lEdit_3">
+                  <widget class="QLineEdit" name="udp_current_ip_lEdit_2">
                    <property name="minimumSize">
                     <size>
                      <width>150</width>
@@ -1019,7 +1029,7 @@ p, li { white-space: pre-wrap; }
                   </widget>
                  </item>
                  <item row="3" column="0">
-                  <widget class="QLineEdit" name="udp_current_port_lEdit_3">
+                  <widget class="QLineEdit" name="udp_current_port_lEdit_2">
                    <property name="minimumSize">
                     <size>
                      <width>150</width>
@@ -1037,61 +1047,14 @@ p, li { white-space: pre-wrap; }
               <item>
                <layout class="QVBoxLayout" name="verticalLayout_9">
                 <item>
-                 <widget class="QPushButton" name="udp_bind_btn_3">
-                  <property name="text">
-                   <string>绑定</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QPushButton" name="udp_unbind_btn_3">
-                  <property name="text">
-                   <string>解除绑定</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <spacer name="verticalSpacer_4">
-                  <property name="orientation">
-                   <enum>Qt::Vertical</enum>
-                  </property>
-                  <property name="sizeHint" stdset="0">
-                   <size>
-                    <width>20</width>
-                    <height>40</height>
-                   </size>
-                  </property>
-                 </spacer>
-                </item>
-                <item>
-                 <widget class="QPushButton" name="udp_bind_bCast_btn_3">
-                  <property name="text">
-                   <string>绑定广播地址</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <spacer name="verticalSpacer_5">
-                  <property name="orientation">
-                   <enum>Qt::Vertical</enum>
-                  </property>
-                  <property name="sizeHint" stdset="0">
-                   <size>
-                    <width>20</width>
-                    <height>40</height>
-                   </size>
-                  </property>
-                 </spacer>
-                </item>
-                <item>
-                 <widget class="QPushButton" name="udp_join_multi_btn_2">
+                 <widget class="QPushButton" name="udp_join_multi_btn">
                   <property name="text">
                    <string>加入组播</string>
                   </property>
                  </widget>
                 </item>
                 <item>
-                 <widget class="QPushButton" name="udp_leave_multi_btn_2">
+                 <widget class="QPushButton" name="udp_leave_multi_btn">
                   <property name="text">
                    <string>退出组播</string>
                   </property>
@@ -1108,7 +1071,7 @@ p, li { white-space: pre-wrap; }
               </property>
               <layout class="QGridLayout" name="gridLayout_20">
                <item row="0" column="0" colspan="2">
-                <widget class="QListWidget" name="udp_listWidget_3"/>
+                <widget class="QListWidget" name="udp_listWidget_2"/>
                </item>
                <item row="1" column="0">
                 <spacer name="horizontalSpacer_30">
@@ -1124,7 +1087,7 @@ p, li { white-space: pre-wrap; }
                 </spacer>
                </item>
                <item row="1" column="1">
-                <widget class="QPushButton" name="udp_history_clear_3">
+                <widget class="QPushButton" name="udp_history_clear_2">
                  <property name="text">
                   <string>清除历史</string>
                  </property>
@@ -1146,7 +1109,7 @@ p, li { white-space: pre-wrap; }
               </property>
               <layout class="QGridLayout" name="gridLayout_19">
                <item row="0" column="0">
-                <widget class="QTextEdit" name="udp_send_textEdit_3">
+                <widget class="QTextEdit" name="udp_send_textEdit_2">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                    <horstretch>0</horstretch>
@@ -1168,7 +1131,7 @@ p, li { white-space: pre-wrap; }
                  </property>
                 </widget>
                </item>
-               <item row="2" column="0">
+               <item row="1" column="0">
                 <layout class="QHBoxLayout" name="horizontalLayout_11">
                  <item>
                   <spacer name="horizontalSpacer_26">
@@ -1204,50 +1167,9 @@ p, li { white-space: pre-wrap; }
                   </spacer>
                  </item>
                  <item>
-                  <widget class="QPushButton" name="udp_broadcast_btn_3">
+                  <widget class="QPushButton" name="udp_multicast_btn">
                    <property name="text">
-                    <string>发送广播信息</string>
-                   </property>
-                  </widget>
-                 </item>
-                </layout>
-               </item>
-               <item row="1" column="0">
-                <layout class="QHBoxLayout" name="horizontalLayout_12">
-                 <item>
-                  <widget class="QLabel" name="label_30">
-                   <property name="text">
-                    <string>目标地址和端口：</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QComboBox" name="udp_destination_cbox_3">
-                   <property name="minimumSize">
-                    <size>
-                     <width>200</width>
-                     <height>0</height>
-                    </size>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <spacer name="horizontalSpacer_29">
-                   <property name="orientation">
-                    <enum>Qt::Horizontal</enum>
-                   </property>
-                   <property name="sizeHint" stdset="0">
-                    <size>
-                     <width>115</width>
-                     <height>20</height>
-                    </size>
-                   </property>
-                  </spacer>
-                 </item>
-                 <item>
-                  <widget class="QPushButton" name="udp_unicast_btn_3">
-                   <property name="text">
-                    <string>发送单播信息</string>
+                    <string>发送组播信息</string>
                    </property>
                   </widget>
                  </item>

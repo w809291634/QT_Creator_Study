@@ -203,11 +203,11 @@ void MainWindow::Udp_Init_Ui()
     ui->udp_bind_port_sbox->setValue(9000);
 
     // 绑定 广播 IP 和 端口的 ui 设置
-    ui->udp_bind_bCast_ip_cbox->addItem("0.0.0.0");
-    ui->udp_bind_bCast_port_sbox->setRange(1,65535);
-    ui->udp_bind_bCast_port_sbox->setValue(9100);
-    ui->udp_bind_bCast_ip_cbox->setEnabled(false);
-    ui->udp_bind_bCast_port_sbox->setEnabled(false);
+//    ui->udp_bind_bCast_ip_cbox->addItem("0.0.0.0");
+//    ui->udp_bind_bCast_port_sbox->setRange(1,65535);
+//    ui->udp_bind_bCast_port_sbox->setValue(9100);
+//    ui->udp_bind_bCast_ip_cbox->setEnabled(false);
+//    ui->udp_bind_bCast_port_sbox->setEnabled(false);
 
     // 组播 IP 和 端口的 ui 设置
     ui->udp_group_ip_cbox->setEditable(true);  //下拉框可编辑输入
@@ -221,8 +221,8 @@ void MainWindow::Udp_Init_Ui()
     QValidator* pValidator = new QRegExpValidator(regExp, this);
     ui->udp_group_ip_cbox->setValidator(pValidator);
 
-    ui->udp_group_port_sbox->setRange(1,65535);
-    ui->udp_group_port_sbox->setValue(9100);
+//    ui->udp_group_port_sbox->setRange(1,65535);
+//    ui->udp_group_port_sbox->setValue(9100);
 
     // 发送目的地址 IP 和 端口的 ui 设置
     // 正则匹配 表达只能输入 0.0.0.0,1~255.255.255.255,65535
@@ -250,10 +250,10 @@ void MainWindow::Udp_SocketBind()
         ui->udp_bind_port_sbox->setEnabled(false);
     }
 
-    // 触发 绑定 广播IP 的按钮
-    if(localAddress==ui->udp_bind_bCast_ip_cbox->currentText()&&
-            localPort==ui->udp_bind_bCast_port_sbox->value())
-        ui->udp_bind_bCast_btn->setEnabled(false);
+//    // 触发 绑定 广播IP 的按钮
+//    if(localAddress==ui->udp_bind_bCast_ip_cbox->currentText()&&
+//            localPort==ui->udp_bind_bCast_port_sbox->value())
+//        ui->udp_bind_bCast_btn->setEnabled(false);
 
     ui->udp_unbind_btn->setEnabled(true);
 
@@ -281,7 +281,7 @@ void MainWindow::Udp_SocketUnBind()
 {
     // 按钮
     ui->udp_bind_btn->setEnabled(true);
-    ui->udp_bind_bCast_btn->setEnabled(true);
+//    ui->udp_bind_bCast_btn->setEnabled(true);
     ui->udp_unbind_btn->setEnabled(false);
     // 设置 绑定IP
     ui->udp_bind_ip_cbox->setEnabled(true);
@@ -316,7 +316,7 @@ void MainWindow::Udp_SocketJoinMulti()
 
     // 编辑栏
     ui->udp_group_ip_cbox->setEnabled(false);
-    ui->udp_group_port_sbox->setEnabled(false);
+//    ui->udp_group_port_sbox->setEnabled(false);
 
     // 信息
     QString join_info=QString("IP:%1 端口:%2 加入组成功").arg(localAddress).arg(localPort);
@@ -344,7 +344,7 @@ void MainWindow::Udp_SocketLeaveMulti()
     ui->udp_multicast_btn->setEnabled(false);
     // 编辑栏
     ui->udp_group_ip_cbox->setEnabled(true);
-    ui->udp_group_port_sbox->setEnabled(true);
+//    ui->udp_group_port_sbox->setEnabled(true);
 
     // 信息
     QString join_info=QString("IP:%1 端口:%2 退出组成功")
@@ -377,6 +377,13 @@ void MainWindow::Udp_Destination_Update()
 }
 
 /******* 按钮槽函数 *******/
+// TAB 页切换
+void MainWindow::on_tabWidget_2_currentChanged(int index)
+{
+    (void)index;
+
+}
+
 // 绑定按钮
 void MainWindow::on_udp_bind_btn_clicked()
 {
@@ -396,15 +403,15 @@ void MainWindow::on_udp_bind_bCast_btn_clicked()
 {
     m_pUdpSocket->abort();
     // 需要绑定到 0.0.0.0 地址上 ，端口也需要统一
-    QHostAddress bind_ip(ui->udp_bind_bCast_ip_cbox->currentText());
-    quint16 bind_port=static_cast<quint16>(ui->udp_bind_bCast_port_sbox->value());
+//    QHostAddress bind_ip(ui->udp_bind_bCast_ip_cbox->currentText());
+//    quint16 bind_port=static_cast<quint16>(ui->udp_bind_bCast_port_sbox->value());
 
     // 设置 同一个地址和端口 可以多次绑定
     // IP可以使用QHostAddress::Any或者不输入参数。
-    if (!m_pUdpSocket->bind(bind_ip,bind_port,QAbstractSocket::ShareAddress|
-                            QAbstractSocket::ReuseAddressHint)) {
-        QMessageBox::warning(this,"绑定失败","请检查服务器IP地址或者端口是否占用","确认");
-    }
+//    if (!m_pUdpSocket->bind(bind_ip,bind_port,QAbstractSocket::ShareAddress|
+//                            QAbstractSocket::ReuseAddressHint)) {
+//        QMessageBox::warning(this,"绑定失败","请检查服务器IP地址或者端口是否占用","确认");
+//    }
 }
 
 // 解除绑定按钮
@@ -419,8 +426,8 @@ void MainWindow::on_udp_join_multi_btn_clicked()
 {
     QString ip = ui->udp_group_ip_cbox->currentText();
     m_multicastAddr = QHostAddress(ip);                                 // 获取组播的IP地址
-    m_multicastPort =
-            static_cast<quint16>(ui->udp_group_port_sbox->value());     // 选择自己绑定的一个端口
+/*    m_multicastPort =
+            static_cast<quint16>(ui->udp_group_port_sbox->value()); */    // 选择自己绑定的一个端口
 
     m_pUdpSocket->abort();
 
@@ -468,7 +475,7 @@ void MainWindow::on_udp_broadcast_btn_clicked()
     Peer_Address peer;
 
     // 选择 统一的 广播端口
-    peer.peerPort = static_cast<quint16>(ui->udp_bind_bCast_port_sbox->value());
+//    peer.peerPort = static_cast<quint16>(ui->udp_bind_bCast_port_sbox->value());
     // 设置 IP 为广播地址，向全网段发送广播消息
     peer.peerAddress = QHostAddress::Broadcast;
 

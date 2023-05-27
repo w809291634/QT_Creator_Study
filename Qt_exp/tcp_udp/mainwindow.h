@@ -110,7 +110,9 @@ private slots:
     void tcp_c_Unconnected();
     void tcp_c_clear();
 
-    /********* UDP *********/
+    /********* UDP 共用*********/
+    void on_tabWidget_2_currentChanged(int index);
+
     void on_udp_bind_btn_clicked();
     void on_udp_unbind_btn_clicked();
     void on_udp_join_multi_btn_clicked();
@@ -120,16 +122,22 @@ private slots:
     void on_udp_broadcast_btn_clicked();
     void on_udp_multicast_btn_clicked();
 
+
     // 数据读写
     void Udp_SocketRead();
     void Udp_SocketWrite(const QByteArray &datagram,
                          const QHostAddress &host,
                          quint16 port,
                          QString notes);
+
+    /********* UDP 单播和广播*********/
+
     // 获取信息
     void Udp_SocketStateChanged(QAbstractSocket::SocketState SocketState);
     QString UDP_getLocalIP();
 
+
+    /********* UDP 组播*********/
 
     // 状态
     void Udp_Init_Ui();
@@ -138,13 +146,15 @@ private slots:
     void Udp_SocketJoinMulti();
     void Udp_SocketLeaveMulti();
     void Udp_Destination_Update();
-
-
-
-
-
-
     void on_udp_bind_bCast_btn_clicked();
+
+
+
+
+
+
+
+
 
 private:
     Ui::MainWindow *ui;
