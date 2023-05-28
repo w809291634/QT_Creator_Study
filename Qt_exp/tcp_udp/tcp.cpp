@@ -40,6 +40,14 @@ QString MainWindow::TCP_getLocalIP()
 }
 
 /*************** TCP服务器 ***************/
+// 服务器初始化UI
+void MainWindow::tcp_s_Init_Ui()
+{
+    ui->tcp_s_port_sbox->setRange(1,65535);
+    ui->tcp_s_port_sbox->setValue(9090);
+    ui->tcp_s_port_sbox->setEnabled(true);
+}
+
 // 服务器 开启监听后的 UI变化
 void MainWindow::tcp_s_listening()
 {
@@ -49,7 +57,7 @@ void MainWindow::tcp_s_listening()
     ui->tcp_s_listen_btn->setEnabled(false);
     ui->tcp_s_close_btn->setEnabled(true);
     ui->tcp_s_ip_cbox->setEnabled(false);
-    ui->tcp_s_port_ledit->setEnabled(false);
+    ui->tcp_s_port_sbox->setEnabled(false);
     ui->tcp_s_send_btn->setEnabled(true);
 }
 
@@ -62,7 +70,7 @@ void MainWindow::tcp_s_listen_close()
     ui->tcp_s_listen_btn->setEnabled(true);
     ui->tcp_s_close_btn->setEnabled(false);
     ui->tcp_s_ip_cbox->setEnabled(true);
-    ui->tcp_s_port_ledit->setEnabled(true);
+    ui->tcp_s_port_sbox->setEnabled(true);
     ui->tcp_s_send_btn->setEnabled(false);
 }
 
@@ -70,7 +78,7 @@ void MainWindow::tcp_s_listen_close()
 void MainWindow::on_tcp_s_listen_btn_clicked()
 {
     QHostAddress ip_add(ui->tcp_s_ip_cbox->currentText());
-    unsigned short port = ui->tcp_s_port_ledit->text().toUShort();
+    unsigned short port = ui->tcp_s_port_sbox->text().toUShort();
 
     // 服务器开始监听
     if(m_TcpServer->listen(ip_add, port)){
@@ -166,6 +174,7 @@ void MainWindow::tcp_s_write()
                     ui->tcp_server_listWidget->addItem(QString("客户端(ip:%1 port:%2)<--%3").arg(ip).arg(port).arg(msg));   // 添加到历史
                     ui->tcp_server_listWidget->scrollToBottom();
                     ui->tcp_s_send_state->setText("发送成功");
+                    ui->statusBar->showMessage("发送成功");
                     m_stimer->start(1000);
 
                 }
@@ -213,7 +222,7 @@ void MainWindow::tcp_s_SocketState_Changed(QAbstractSocket::SocketState SocketSt
 
     switch(SocketState){
     case QAbstractSocket::UnconnectedState:
-        qDebug()<<"tcp_s UnconnectedState";
+        ui->statusBar->showMessage("状态：套接字解除绑定");
         m_Tcp_ClientList->removeOne(temp_socket);
         ui->tcp_server_listWidget->
                 addItem(QString("IP地址:%1 端口:%2 已断开服务器")
@@ -223,28 +232,29 @@ void MainWindow::tcp_s_SocketState_Changed(QAbstractSocket::SocketState SocketSt
         break;
 
     case QAbstractSocket::HostLookupState:
-        qDebug()<<"tcp_s HostLookupState";
+        ui->statusBar->showMessage("状态：套接字正在搜索");
         break;
 
     case QAbstractSocket::ConnectingState:
-        qDebug()<<"tcp_s ConnectingState";
+        ui->statusBar->showMessage("状态：套接字正在连接");
         break;
 
     case QAbstractSocket::ConnectedState:
-        qDebug()<<"tcp_s ConnectedState";
+        ui->statusBar->showMessage("状态：套接字已连接");
         if(!m_Tcp_ClientList->contains(temp_socket))
             m_Tcp_ClientList->append(temp_socket);
         break;
 
     case QAbstractSocket::BoundState:
-        qDebug()<<"tcp_s BoundState";
+        ui->statusBar->showMessage("状态：套接字绑定状态");
         break;
 
     case QAbstractSocket::ListeningState:
-        qDebug()<<"tcp_s ListeningState";
+        ui->statusBar->showMessage("状态：套接字监听状态");
         break;
 
     case QAbstractSocket::ClosingState:
+        ui->statusBar->showMessage("状态：套接字关闭状态");
         m_Tcp_ClientList->removeOne(temp_socket);
         break;
     }
@@ -257,6 +267,12 @@ void MainWindow::tcp_s_clear()
 }
 
 /*************** TCP客户端 ***************/
+// 客户端初始化UI
+void MainWindow::tcp_c_Init_Ui(QString &Priority_ip)
+{
+    ui->tcp_cs_ip_ledit->setText(Priority_ip);              // 用于大概率的搜索 计算机的服务器IP地址
+}
+
 // TCP 客户端 正在连接
 void MainWindow::tcp_c_Connecting()
 {
@@ -376,6 +392,7 @@ void MainWindow::tcp_c_write()
             ui->tcp_client_listWidget->addItem(QString("服务器(ip:%1 port:%2)<--%3").arg(ip).arg(port).arg(msg));   // 添加到历史
             ui->tcp_client_listWidget->scrollToBottom();
             ui->tcp_c_send_state->setText("发送成功");
+            ui->statusBar->showMessage("发送成功");
             m_ctimer->start(1000);
         }
     }
@@ -386,34 +403,34 @@ void MainWindow::tcp_c_SocketState_Changed(QAbstractSocket::SocketState SocketSt
 {
     switch(SocketState){
     case QAbstractSocket::UnconnectedState:
-        qDebug()<<"tcp_c UnconnectedState";
+        ui->statusBar->showMessage("状态：套接字解除绑定");
         tcp_c_Unconnected();
         break;
 
     case QAbstractSocket::HostLookupState:
-//        qDebug()<<"tcp_c HostLookupState";
+        ui->statusBar->showMessage("状态：套接字正在搜索");
         break;
 
     case QAbstractSocket::ConnectingState:
         tcp_c_Connecting();
-        qDebug()<<"tcp_c ConnectingState";
+        ui->statusBar->showMessage("状态：套接字正在连接");
         break;
 
     case QAbstractSocket::ConnectedState:
-        qDebug()<<"tcp_c ConnectedState";
+        ui->statusBar->showMessage("状态：套接字已连接");
         tcp_c_Connected();
         break;
 
     case QAbstractSocket::BoundState:
-//        qDebug()<<"tcp_c BoundState";
+        ui->statusBar->showMessage("状态：套接字绑定状态");
         break;
 
     case QAbstractSocket::ListeningState:
-//        qDebug()<<"tcp_c ListeningState";
+        ui->statusBar->showMessage("状态：套接字监听状态");
         break;
 
     case QAbstractSocket::ClosingState:
-        qDebug()<<"tcp_c ClosingState";
+        ui->statusBar->showMessage("状态：套接字关闭状态");
         tcp_c_Unconnected();
         break;
     }

@@ -83,13 +83,16 @@ private slots:
     void tcp_s_read();
     void tcp_s_write();
 
+    // UI相关
+    void tcp_s_Init_Ui();
+    void tcp_s_listening();
+    void tcp_s_listen_close();
+    void tcp_s_clear();
+
     // 获取信息
     void tcp_s_update_ClientInfo();
     void tcp_s_acceptError(QAbstractSocket::SocketError socketError);
     void tcp_s_SocketState_Changed(QAbstractSocket::SocketState SocketState);
-    void tcp_s_listening();
-    void tcp_s_listen_close();
-    void tcp_s_clear();
     QString TCP_getLocalIP();
 
     /********* TCP客户端 *********/
@@ -102,26 +105,25 @@ private slots:
     void tcp_c_read();
     void tcp_c_write();
 
-    // 获取信息
-    void tcp_c_SocketState_Changed(QAbstractSocket::SocketState SocketState);
+    // UI相关
+    void tcp_c_Init_Ui(QString &Priority_ip);
     void tcp_c_Connecting();
     void tcp_c_Connecting_timeout();
     void tcp_c_Connected();
     void tcp_c_Unconnected();
     void tcp_c_clear();
 
-    /********* UDP 共用*********/
+    // 获取信息
+    void tcp_c_SocketState_Changed(QAbstractSocket::SocketState SocketState);
+
+    /********* UDP *********/
+    QString UDP_getLocalIP();
+    // 槽函数
     void on_tabWidget_2_currentChanged(int index);
-
-    void on_udp_bind_btn_clicked();
-    void on_udp_unbind_btn_clicked();
-    void on_udp_join_multi_btn_clicked();
-    void on_udp_leave_multi_btn_clicked();
-    void on_udp_history_clear_clicked();
-    void on_udp_unicast_btn_clicked();
-    void on_udp_broadcast_btn_clicked();
-    void on_udp_multicast_btn_clicked();
-
+    // 公共状态
+    void Udp_Init_Ui();
+    void Udp_SocketBind();
+    void Udp_SocketUnBind();
 
     // 数据读写
     void Udp_SocketRead();
@@ -129,35 +131,34 @@ private slots:
                          const QHostAddress &host,
                          quint16 port,
                          QString notes);
-
-    /********* UDP 单播和广播*********/
-
-    // 获取信息
     void Udp_SocketStateChanged(QAbstractSocket::SocketState SocketState);
-    QString UDP_getLocalIP();
 
+    /** UDP 单播和广播 **/
+    void Udp_Destination_Update();
+    // 槽函数
+    void on_udp_bind_btn_clicked();
+    void on_udp_bind_special_btn_clicked();
+    void on_udp_unbind_btn_clicked();
+    void on_udp_unicast_btn_clicked();
+    void on_udp_broadcast_btn_clicked();
+    void on_udp_history_clear_clicked();
 
-    /********* UDP 组播*********/
+    /** UDP 组播 **/
+    // 槽函数
+    void on_udp_join_multi_btn_clicked();
+    void on_udp_leave_multi_btn_clicked();
+    void on_udp_multicast_btn_clicked();
+    void on_udp_history_clear_2_clicked();
 
     // 状态
-    void Udp_Init_Ui();
-    void Udp_SocketBind();
-    void Udp_SocketUnBind();
     void Udp_SocketJoinMulti();
     void Udp_SocketLeaveMulti();
-    void Udp_Destination_Update();
-    void on_udp_bind_bCast_btn_clicked();
-
-
-
-
-
-
 
 
 
 private:
     Ui::MainWindow *ui;
+    QHostAddress m_any_ipv4;
     /* TCP服务器 */
     QSharedPointer<QList<QTcpSocket *>> m_Tcp_ClientList;
     QTcpServer * m_TcpServer;
@@ -170,12 +171,18 @@ private:
 
     /* UDP */
     QUdpSocket * m_pUdpSocket;
+    bool m_Bound;               // 绑定状态标志位
+
+    // 单播 和 广播
     QSharedPointer<QList<Peer_Address>> m_Peer_Address_p=
             static_cast<QSharedPointer<QList<Peer_Address>>>(nullptr);      // 保存 本站点 所有的 目的地址
     QTimer* dest_update_timer;
+
+    // 组播
     QHostAddress m_multicastAddr;
     quint16 m_multicastPort;
-    bool m_Bound;
+    bool m_multicast;           // 组播状态标志位
+
 };
 
 #endif // MAINWINDOW_H
