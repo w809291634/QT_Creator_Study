@@ -18,7 +18,6 @@
 #include <QTcpSocket>
 //UDP
 #include <QUdpSocket>
-#include <QNetworkDatagram>
 
 #define FIRST_IP_ARRDESS                {"192.168.100",\
                                         "192.168.31"}       // 服务器端 想监听的 优先地址

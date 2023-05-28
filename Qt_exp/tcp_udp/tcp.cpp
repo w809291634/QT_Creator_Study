@@ -271,6 +271,17 @@ void MainWindow::tcp_s_clear()
 void MainWindow::tcp_c_Init_Ui(QString &Priority_ip)
 {
     ui->tcp_cs_ip_ledit->setText(Priority_ip);              // 用于大概率的搜索 计算机的服务器IP地址
+
+    // 发送目的地址 IP 和 端口的 ui 设置
+    // 正则匹配 表达只能输入 0.0.0.0,1~255.255.255.255
+    QRegExp dest_regExp("^((\\d)|([1-9]\\d)|(1\\d{2})|(2[0-4]\\d)|(25[0-5]))"
+                        "(\\.((\\d)|([1-9]\\d)|(1\\d{2})|(2[0-4]\\d)|(25[0-5]))){3}$");
+    QValidator* pValidator = new QRegExpValidator(dest_regExp, this);
+    ui->tcp_cs_ip_ledit->setValidator(pValidator);
+
+    ui->tcp_cs_port_sbox->setRange(1,65535);
+    ui->tcp_cs_port_sbox->setValue(9090);
+    ui->tcp_cs_port_sbox->setEnabled(true);
 }
 
 // TCP 客户端 正在连接
@@ -280,7 +291,7 @@ void MainWindow::tcp_c_Connecting()
     ui->tcp_c_port_ledit->setText("连接服务器中...");
     ui->tcp_c_connect_btn->setEnabled(false);
     ui->tcp_cs_ip_ledit->setEnabled(false);
-    ui->tcp_cs_port_ledit->setEnabled(false);
+    ui->tcp_cs_port_sbox->setEnabled(false);
     ui->tcp_c_disconnect_btn->setEnabled(true);
     ui->tcp_c_send_btn->setEnabled(true);
 
@@ -305,7 +316,7 @@ void MainWindow::tcp_c_Connected()
 
     ui->tcp_c_connect_btn->setEnabled(false);
     ui->tcp_cs_ip_ledit->setEnabled(false);
-    ui->tcp_cs_port_ledit->setEnabled(false);
+    ui->tcp_cs_port_sbox->setEnabled(false);
     ui->tcp_c_disconnect_btn->setEnabled(true);
     ui->tcp_c_send_btn->setEnabled(true);
 
@@ -326,7 +337,7 @@ void MainWindow::tcp_c_Unconnected()
 
     ui->tcp_c_connect_btn->setEnabled(true);
     ui->tcp_cs_ip_ledit->setEnabled(true);
-    ui->tcp_cs_port_ledit->setEnabled(true);
+    ui->tcp_cs_port_sbox->setEnabled(true);
     ui->tcp_c_disconnect_btn->setEnabled(false);
     ui->tcp_c_send_btn->setEnabled(false);
 
@@ -341,7 +352,7 @@ void MainWindow::tcp_c_Unconnected()
 void MainWindow::on_tcp_c_connect_btn_clicked()
 {
     QString ip = ui->tcp_cs_ip_ledit->text();
-    unsigned short port = ui->tcp_cs_port_ledit->text().toUShort();
+    unsigned short port = ui->tcp_cs_port_sbox->text().toUShort();
 
     // 连接服务器
     m_TcpClient->connectToHost(QHostAddress(ip), port);

@@ -240,6 +240,9 @@ void MainWindow::Udp_SocketRead()
         // 读取数据
         m_pUdpSocket->readDatagram(dataGram.data(), dataGram.size()
                                    , peerAddress, peerPort);
+        // 获取 数据报 里面的数据
+        QString msg = dataGram.data();
+        // 保存地址
         peer.peerAddress_port=QString("%1,%2")
                 .arg(peerAddress->toString())
                 .arg(*peerPort);
@@ -247,32 +250,31 @@ void MainWindow::Udp_SocketRead()
         QString localAddress = m_pUdpSocket->localAddress().toString();
         quint16 localPort = m_pUdpSocket->localPort();
 
-        // 判断地址 格式是否 有效
+        // 信息
+        QString info = QString("站点(ip:%1 port:%2)-->"
+                              "本站(ip:%3 port:%4) %5")
+                      .arg(peerAddress->toString())
+                      .arg(*peerPort)
+                      .arg(localAddress)
+                      .arg(localPort)
+                      .arg(msg);
+
+        if(ui->tabWidget_2->currentIndex()==0)
+        {
+            ui->udp_listWidget->addItem(info);
+            ui->udp_listWidget->scrollToBottom();
+        }
+        else if(ui->tabWidget_2->currentIndex()==1)
+        {
+            ui->udp_listWidget_2->addItem(info);
+            ui->udp_listWidget_2->scrollToBottom();
+        }
+
+        // 储存地址信息
         if(peer.is_vaild()){
             // 如果没有储存 进行储存
             if(!m_Peer_Address_p->contains(peer)){
                 m_Peer_Address_p->insert(0,peer);
-            }
-            // 获取 数据报 里面的数据
-            QString msg = dataGram.data();
-            // 信息
-            QString info = QString("站点(ip:%1 port:%2)-->"
-                                  "本站(ip:%3 port:%4) %5")
-                          .arg(peerAddress->toString())
-                          .arg(*peerPort)
-                          .arg(localAddress)
-                          .arg(localPort)
-                          .arg(msg);
-
-            if(ui->tabWidget_2->currentIndex()==0)
-            {
-                ui->udp_listWidget->addItem(info);
-                ui->udp_listWidget->scrollToBottom();
-            }
-            else if(ui->tabWidget_2->currentIndex()==1)
-            {
-                ui->udp_listWidget_2->addItem(info);
-                ui->udp_listWidget_2->scrollToBottom();
             }
         }
     }
@@ -308,7 +310,10 @@ void MainWindow::Udp_SocketWrite(const QByteArray &datagram,
             ui->udp_listWidget_2->addItem(info);
             ui->udp_listWidget_2->scrollToBottom();
         }
+        ui->statusBar->showMessage("状态：发送成功");
     }
+    else
+        ui->statusBar->showMessage("状态：发送失败");
 }
 
 // 套接字 状态变化
@@ -412,14 +417,32 @@ void MainWindow::on_udp_unicast_btn_clicked()
     QByteArray msg = ui->udp_send_textEdit->toPlainText().toUtf8();
     // 根据选择 获取 目标地址和端口
     QString target = ui->udp_destination_cbox->currentText();
-    // 搜索出 储存的 目标地址
-    foreach(auto peer,*m_Peer_Address_p.data()){
-        if(target==peer.peerAddress_port
-                && peer.is_vaild())
+    // 拆分字符
+    int index=target.indexOf(",",0);
+    Peer_Address  peer;
+    peer.peerAddress_port=target;
+    peer.peerAddress = QHostAddress(target.mid(0,index));
+    peer.peerPort=
+            static_cast<quint16>(target.mid(index+1).toUInt());
+
+    if(peer.is_vaild()){
+        Udp_SocketWrite(msg,peer.peerAddress,peer.peerPort,notes);
+    }else{
+        ui->statusBar->showMessage("状态：发送失败");
+    }
+
+    // 储存这个自定义的地址
+    bool add=true;
+    foreach(auto _peer,*m_Peer_Address_p.data()){
+        if(peer.peerAddress_port==_peer.peerAddress_port
+                || !peer.is_vaild())
         {
-            Udp_SocketWrite(msg,peer.peerAddress,peer.peerPort,notes);
+            add=false;
+            break;
         }
     }
+    if(add)
+        m_Peer_Address_p->insert(0,peer);
 }
 
 // 广播
@@ -556,5 +579,3 @@ void MainWindow::on_udp_history_clear_2_clicked()
 {
     ui->udp_listWidget_2->clear();
 }
-
-
