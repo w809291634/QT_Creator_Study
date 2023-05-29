@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/">
+        <file>etc/webapp.ini</file>
+    </qresource>
+</RCC>
