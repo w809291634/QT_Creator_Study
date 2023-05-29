@@ -29,11 +29,13 @@ CONFIG += c++11
 SOURCES += \
         main.cpp \
         mainwindow.cpp \
-    httpserver.cpp
+    httpserver.cpp \
+    httpclient.cpp
 
 HEADERS += \
         mainwindow.h \
-    httpserver.h
+    httpserver.h \
+    httpclient.h
 
 FORMS += \
         mainwindow.ui

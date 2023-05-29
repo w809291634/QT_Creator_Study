@@ -1,5 +1,6 @@
 ﻿#include "httpserver.h"
 
+//
 HttpServer::HttpServer(QObject* parent)
     : HttpRequestHandler(parent)
 {

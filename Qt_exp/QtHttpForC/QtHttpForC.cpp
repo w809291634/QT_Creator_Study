@@ -18,6 +18,8 @@ QtHttpForC::QtHttpForC(QWidget *parent)
     m_Buttongroup = new QButtonGroup(this);
     m_Buttongroup->addButton(ui.radioButton, 1);
     m_Buttongroup->addButton(ui.radioButton_2, 2);
+
+    // 设置服务器IP
     ui.textEdit_addr->setText("127.0.0.1");
     ui.textEdit_port->setText("8080");
     m_Socket = new QTcpSocket();
