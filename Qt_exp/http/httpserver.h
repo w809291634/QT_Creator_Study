@@ -4,17 +4,22 @@
 #include "httprequesthandler.h"
 #include "httplistener.h"
 
+typedef QMap<QString,QString> StringMap;
+
 using namespace stefanfrings;
 
-class HttpServer : public HttpRequestHandler
+class HttpServerHandler : public HttpRequestHandler
 {
     Q_OBJECT
 public:
-    HttpServer(QObject* parent = nullptr);
-    ~HttpServer();
+    HttpServerHandler(QObject* parent = nullptr);
+    ~HttpServerHandler();
 
     virtual void service(HttpRequest& request,
                          HttpResponse& response);
+Q_SIGNALS:
+    void HttpRequestInfo(const StringMap& info);
+
 };
 
 

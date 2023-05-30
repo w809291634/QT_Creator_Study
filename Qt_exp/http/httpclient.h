@@ -7,6 +7,7 @@
 #include <QNetworkAccessManager>
 #include <QUrl>
 #include <QJsonObject>
+#include <QSharedPointer>
 
 class HttpClient : public QTcpSocket
 {
@@ -14,6 +15,8 @@ class HttpClient : public QTcpSocket
 public:
     HttpClient(QObject *parent=nullptr);
     ~HttpClient();
+
+    QNetworkAccessManager* m_manager;
 };
 
 #endif // HTTPCLIENT_H
