@@ -118,7 +118,6 @@ void MainWindow::server_listening()
 {
     ui->server_listen_btn->setEnabled(false);
     ui->server_close_btn->setEnabled(true);
-    ui->server_send_btn->setEnabled(true);
     ui->server_ip_cbox->setEnabled(false);
     ui->server_port_sbox->setEnabled(false);
 }
@@ -128,7 +127,6 @@ void MainWindow::server_close()
 {
     ui->server_listen_btn->setEnabled(true);
     ui->server_close_btn->setEnabled(false);
-    ui->server_send_btn->setEnabled(false);
     ui->server_ip_cbox->setEnabled(true);
     ui->server_port_sbox->setEnabled(true);
 }
@@ -138,12 +136,6 @@ void MainWindow::server_close()
 void MainWindow::on_server_history_clear_clicked()
 {
     ui->server_listWidget->clear();
-}
-
-// 服务器发送消息按钮
-void MainWindow::on_server_send_btn_clicked()
-{
-
 }
 
 // 服务器开始监听
@@ -189,10 +181,6 @@ void MainWindow::server_info_update(const StringMap & info)
     ui->request_path_lEdit->setText(info["Path"]);
     ui->request_ip_lEdit->setText(info["PeerAddress"]);
     ui->request_body_lEdit->setText(info["Body"]);
-    QString msg = QString("IP:%1--> %2")
-            .arg(info["PeerAddress"]).arg(info["Body"]);
-    ui->server_listWidget->addItem(msg);
-    ui->server_listWidget->scrollToBottom();
 }
 
 /************ HTTP 客户端 ************/
@@ -201,9 +189,6 @@ void MainWindow::server_info_update(const StringMap & info)
 void MainWindow::init_http_client()
 {
     m_http_client = new HttpClient(this);
-    m_get_timer = new QTimer(this);
-    connect(m_get_timer, SIGNAL(timeout()), this, SLOT(get_server_message()));
-    m_get_timer->start(500);
 }
 
 // 初始化 http 客户端 UI
@@ -212,6 +197,8 @@ void MainWindow::init_http_client_ui()
     ui->c_server_port_sbox->setRange(1,65535);
     ui->c_server_port_sbox->setValue(8080);
     ui->c_server_port_sbox->setEnabled(true);
+
+    ui->c_server_ip_cbox->setEditable(true);
 }
 
 /** 槽函数 **/
@@ -235,7 +222,7 @@ void MainWindow::on_client_send_request_clicked()
         if (ui->post_rbtn->isChecked())
         {
             // 获取 发送的消息 正文
-            QByteArray data=ui->client_send_tEdit->toPlainText().toLatin1();
+            QByteArray data=ui->client_send_tEdit->toPlainText().toUtf8();
             // 设置url地址
             request.setUrl(QUrl(requestHeader));
             ui->request_URL->setText(requestHeader);
@@ -258,6 +245,9 @@ void MainWindow::on_client_send_request_clicked()
             // 客户端 可以主动 断开 连接
             m_http_client->abort();
             request.setUrl(QUrl(requestHeader));
+            // 设置 Content-Type 设置body的数据格式
+            request.setHeader(QNetworkRequest::ContentTypeHeader,
+                              QVariant("application/json"));
 
             m_get_reply = m_http_client->m_manager->get(request);
             if(m_get_reply!=nullptr){
@@ -273,57 +263,46 @@ void MainWindow::on_client_send_request_clicked()
 void MainWindow::client_request_finish()
 {
     QNetworkReply* reply= qobject_cast<QNetworkReply*>(sender());
+    if(reply->error()==QNetworkReply::NoError){
+        QByteArray replyData = reply->readAll();
+        if(reply->objectName()=="post_reply"){
+            /* POST应用反馈 */
+            ui->server_listWidget->addItem(QString(replyData));
+            ui->server_listWidget->scrollToBottom();
 
-    if(reply->objectName()=="get_message"){
-
-
-
-    }else{
-        //对请求的返回异常进行处理
-        if(reply->error()==QNetworkReply::NoError){
-            QByteArray replyData = reply->readAll();
-            if(reply->objectName()=="post_reply"){
-
-                ui->client_send_request->setEnabled(true);
-            }
-            else if(reply->objectName()=="get_reply"){
-
-                ui->client_send_request->setEnabled(true);
-            }
-
-        }else{
-            QString err_info=QString("客户端连接错误:错误码: %1").arg(reply->error());
-            ui->client_listWidget->addItem(err_info);
-            ui->client_listWidget->scrollToBottom();
         }
+        else if(reply->objectName()=="get_reply"){
+            /* GET应用反馈 */
+            QUrl url=reply->url();
+            QString msg(replyData);
+            QJsonDocument jsonDoc = QJsonDocument::fromJson(msg.toUtf8());
+            if(jsonDoc.isObject()){
+                QJsonObject data=jsonDoc.object();
+                QJsonValue sum =data.value("sum");
+                QJsonValue msg =data.value("msg");
+                if(msg.isString()){
+                    ui->server_listWidget->addItem(msg.toString());
+                    ui->server_listWidget->scrollToBottom();
+                }
+                if(sum.isString()){
+                    QString info=QString("<--%1 sum:%2").arg(url.host()).arg(sum.toString());
+                    ui->server_listWidget->addItem(info);
+                    ui->server_listWidget->scrollToBottom();
+
+                    info=QString("%1--> sum:%2").arg(url.host()).arg(sum.toString());
+                    ui->client_listWidget->addItem(info);
+                    ui->server_listWidget->scrollToBottom();
+
+                }
+            }
+        }
+    }else{
+        QString err_info=QString("客户端连接错误:错误码: %1").arg(reply->error());
+        ui->client_listWidget->addItem(err_info);
+        ui->client_listWidget->scrollToBottom();
     }
+
     reply->deleteLater();
     m_sem->release();
-}
-
-// 获取 服务端 的信息
-void MainWindow::get_server_message()
-{
-    if(m_sem->tryAcquire()){
-        QNetworkRequest request;
-        // 定义URL的基本格式
-        QString scheme = "http://";
-        QString serverAddr = ui->c_server_ip_cbox->currentText();
-        QString port = ui->c_server_port_sbox->text();
-        QString path = "/zonesion/index";
-        QString parameter = "/?get_message=1";
-        QString requestHeader = scheme
-                + serverAddr + QString(":") + port
-                + path + parameter;
-
-        request.setUrl(QUrl(requestHeader));
-        // 默认为 keep-alive,我们可以使用 建立 一次 连接就关闭
-        request.setRawHeader("Connection", "close");
-
-        m_get_msg = m_http_client->m_manager->get(request);
-        if(m_get_msg!=nullptr){
-            m_get_msg->setObjectName("get_message");
-            QObject::connect(m_get_msg, SIGNAL(finished()), this, SLOT(client_request_finish()));
-        }
-    }
+    ui->client_send_request->setEnabled(true);
 }

@@ -4,6 +4,9 @@
 #include "httprequesthandler.h"
 #include "httplistener.h"
 
+#include <QJsonObject>
+#include <QJsonDocument>
+
 typedef QMap<QString,QString> StringMap;
 
 using namespace stefanfrings;

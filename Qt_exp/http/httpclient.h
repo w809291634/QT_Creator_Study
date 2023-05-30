@@ -6,7 +6,6 @@
 #include <QNetworkReply>
 #include <QNetworkAccessManager>
 #include <QUrl>
-#include <QJsonObject>
 #include <QSharedPointer>
 
 class HttpClient : public QTcpSocket

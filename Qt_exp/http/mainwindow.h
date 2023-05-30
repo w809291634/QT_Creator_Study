@@ -38,7 +38,6 @@ private slots:
     /** HTTP 服务器 **/
     // 控件 槽函数
     void on_server_history_clear_clicked();
-    void on_server_send_btn_clicked();
     void on_server_listen_btn_clicked();
     void on_server_close_btn_clicked();
 
@@ -53,7 +52,6 @@ private slots:
 
     // 客户端请求
     void client_request_finish();
-    void get_server_message();
 
 private:
     void TCP_getLocalIP();
@@ -74,13 +72,11 @@ private:
 
     // http 客户端对象
     HttpClient* m_http_client;
-    QTimer* m_get_timer;
+
     // 变量
     QNetworkReply* m_post_reply=
             static_cast<QNetworkReply*>(nullptr);
     QNetworkReply* m_get_reply=
-            static_cast<QNetworkReply*>(nullptr);
-    QNetworkReply* m_get_msg=
             static_cast<QNetworkReply*>(nullptr);
     QSemaphore* m_sem;
 };
