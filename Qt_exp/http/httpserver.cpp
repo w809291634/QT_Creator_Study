@@ -1,4 +1,5 @@
 ﻿#include "httpserver.h"
+#define SERVER_MESSAGE  "客户端！你好"
 
 HttpServerHandler::HttpServerHandler(QObject* parent)
     : HttpRequestHandler(parent)
@@ -40,24 +41,24 @@ void HttpServerHandler::service(HttpRequest &request, HttpResponse &response)
     info["Path"]=request.getPath();                         // http协议路径
     info["PeerAddress"]=request.getPeerAddress().toString();// http协议对方地址
     info["Body"]=request.getBody();                         // http协议正文
-    // 发送信号
-    emit HttpRequestInfo(info);                             // 发送这些消息更新UI
 
     /** 处理这个请求 **/
     if(request.getMethod()=="GET"){
         /* GET 请求 计算求和 */
         int para1=ParameterMap.value("para1").toInt();
         int para2=ParameterMap.value("para2").toInt();
+        info["message"]=QString("IP:%1--> %2+%3=?")
+                                .arg(request.getPeerAddress().toString())
+                                .arg(para1)
+                                .arg(para2);
+
+        emit HttpRequestInfo(info);                             // 发送这些消息更新UI
 
         // 封装成 QJsonObject 打包发送出去
         QJsonObject obj_root;
         // 添加 求和值
         obj_root.insert("sum",QString("%1").arg(para1+para2));
-        // 添加 到 ui显示的消息
-        obj_root.insert("msg",QString("IP:%1--> %2+%3=?")
-                        .arg(request.getPeerAddress().toString())
-                        .arg(para1)
-                        .arg(para2));
+
         QJsonDocument jsonDoc = QJsonDocument(obj_root);
         QString msg=jsonDoc.toJson(QJsonDocument::Compact);
 
@@ -65,10 +66,11 @@ void HttpServerHandler::service(HttpRequest &request, HttpResponse &response)
         response.write(msg.toUtf8());
     }else if(request.getMethod()=="POST"){
         /* POST 请求 仅用于显示 */
-        QString msg=QString("IP:%1--> %2")
+        info["message"]=QString("IP:%1--> %2")
                 .arg(request.getPeerAddress().toString())
                 .arg(QString(request.getBody()));
 
-        response.write(msg.toUtf8());
+        emit HttpRequestInfo(info);                             // 发送这些消息更新UI
+        response.write(QString(SERVER_MESSAGE).toUtf8());
     }
 }

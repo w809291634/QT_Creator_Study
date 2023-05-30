@@ -181,6 +181,10 @@ void MainWindow::server_info_update(const StringMap & info)
     ui->request_path_lEdit->setText(info["Path"]);
     ui->request_ip_lEdit->setText(info["PeerAddress"]);
     ui->request_body_lEdit->setText(info["Body"]);
+    if(info.contains("message")){
+        ui->server_listWidget->addItem(info["message"]);
+        ui->server_listWidget->scrollToBottom();
+    }
 }
 
 /************ HTTP 客户端 ************/
@@ -264,35 +268,26 @@ void MainWindow::client_request_finish()
 {
     QNetworkReply* reply= qobject_cast<QNetworkReply*>(sender());
     if(reply->error()==QNetworkReply::NoError){
+        QUrl url=reply->url();
         QByteArray replyData = reply->readAll();
         if(reply->objectName()=="post_reply"){
             /* POST应用反馈 */
-            ui->server_listWidget->addItem(QString(replyData));
-            ui->server_listWidget->scrollToBottom();
-
+            QString msg(replyData);
+            QString info=QString("%1--> %2").arg(url.host()).arg(QString(replyData));
+            ui->client_listWidget->addItem(info);
+            ui->client_listWidget->scrollToBottom();
         }
         else if(reply->objectName()=="get_reply"){
             /* GET应用反馈 */
-            QUrl url=reply->url();
             QString msg(replyData);
             QJsonDocument jsonDoc = QJsonDocument::fromJson(msg.toUtf8());
             if(jsonDoc.isObject()){
                 QJsonObject data=jsonDoc.object();
                 QJsonValue sum =data.value("sum");
-                QJsonValue msg =data.value("msg");
-                if(msg.isString()){
-                    ui->server_listWidget->addItem(msg.toString());
-                    ui->server_listWidget->scrollToBottom();
-                }
                 if(sum.isString()){
-                    QString info=QString("<--%1 sum:%2").arg(url.host()).arg(sum.toString());
-                    ui->server_listWidget->addItem(info);
-                    ui->server_listWidget->scrollToBottom();
-
-                    info=QString("%1--> sum:%2").arg(url.host()).arg(sum.toString());
+                    QString info=QString("%1--> sum:%2").arg(url.host()).arg(sum.toString());
                     ui->client_listWidget->addItem(info);
-                    ui->server_listWidget->scrollToBottom();
-
+                    ui->client_listWidget->scrollToBottom();
                 }
             }
         }
