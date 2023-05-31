@@ -1,5 +1,0 @@
-<RCC>
-    <qresource prefix="/">
-        <file>QtWebApp/config/webapp.ini</file>
-    </qresource>
-</RCC>
