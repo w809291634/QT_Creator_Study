@@ -15,30 +15,20 @@ MainWindow::MainWindow(QWidget *parent) :
     m_client->setHostname(ui->lineEditHost->text());
     m_client->setPort(static_cast<quint16>(ui->spinBoxPort->value()));
 
-    connect(m_client, SIGNAL(stateChanged(ClientState)), this, SLOT(updateLogStateChange()));
-    connect(m_client, SIGNAL(disconnected()), this, SLOT(brokerDisconnected()));
+    connect(m_client, SIGNAL(stateChanged(ClientState)),
+            this, SLOT(updateLogStateChange()));
+    connect(m_client, SIGNAL(disconnected()),
+            this, SLOT(brokerDisconnected()));
 
-    connect(m_client, &QMqttClient::messageReceived, this, [this](const QByteArray &message, const QMqttTopicName &topic) {
-        const QString content = QDateTime::currentDateTime().toString()
-                    + QLatin1String(" Received Topic: ")
-                    + topic.name()
-                    + QLatin1String(" Message: ")
-                    + message
-                    + QLatin1Char('\n');
-        ui->editLog->insertPlainText(content);
-    });
 
-    connect(m_client, &QMqttClient::pingResponseReceived, this, [this]() {
-        ui->buttonPing->setEnabled(true);
-        const QString content = QDateTime::currentDateTime().toString()
-                    + QLatin1String(" PingResponse")
-                    + QLatin1Char('\n');
-        ui->editLog->insertPlainText(content);
-    });
-
+    connect(m_client, SIGNAL(messageReceived(const QByteArray &, const QMqttTopicName &)),
+            this, SLOT(client_messageReceived(const QByteArray &, const QMqttTopicName &)));
+    connect(m_client, SIGNAL(pingResponseReceived()),
+            this,SLOT(client_ping_response()));
     connect(ui->lineEditHost, SIGNAL(textChanged(const QString)),
             m_client, SLOT(setHostname(const QString)));
-    connect(ui->spinBoxPort, SIGNAL(valueChanged(int)), this, SLOT(setClientPort(int)));
+    connect(ui->spinBoxPort, SIGNAL(valueChanged(int)),
+            this, SLOT(setClientPort(int)));
     updateLogStateChange();
 }
 
@@ -47,7 +37,27 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+void MainWindow::client_messageReceived(
+        const QByteArray &message,
+        const QMqttTopicName &topic)
+{
+    const QString content = QDateTime::currentDateTime().toString()
+                + QLatin1String(" Received Topic: ")
+                + topic.name()
+                + QLatin1String(" Message: ")
+                + message
+                + QLatin1Char('\n');
+    ui->editLog->insertPlainText(content);
+}
 
+void MainWindow::client_ping_response()
+{
+    ui->buttonPing->setEnabled(true);
+    const QString content = QDateTime::currentDateTime().toString()
+                + QLatin1String(" PingResponse")
+                + QLatin1Char('\n');
+    ui->editLog->insertPlainText(content);
+}
 
 
 void MainWindow::on_buttonConnect_clicked()

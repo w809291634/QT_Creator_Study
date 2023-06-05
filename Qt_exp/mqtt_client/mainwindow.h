@@ -27,17 +27,25 @@ public slots:
     void setClientPort(int p);
 
 private slots:
+    // 槽函数
     void on_buttonConnect_clicked();
     void on_buttonQuit_clicked();
+    void on_buttonPublish_clicked();
+    void on_buttonSubscribe_clicked();
+    void on_buttonPing_clicked();
+
+    // 日志更新
     void updateLogStateChange();
+    // 接收订阅消息
+    void client_messageReceived(
+            const QByteArray &message,
+            const QMqttTopicName &topic);
+    // ping命令反馈
+    void client_ping_response();
 
     void brokerDisconnected();
 
-    void on_buttonPublish_clicked();
 
-    void on_buttonSubscribe_clicked();
-
-    void on_buttonPing_clicked();
 
 private:
     Ui::MainWindow *ui;
