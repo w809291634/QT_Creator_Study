@@ -1,0 +1,6 @@
+sudo cp ~/qt_designer_env/cmake/Qt5Designer /opt/QT5.5.1/aarch64_sdk/lib/cmake -r
+sudo cp ~/qt_designer_env/include/QtDesigner /opt/QT5.5.1/aarch64_sdk/include -r
+sudo cp ~/qt_designer_env/lib/* /opt/QT5.5.1/aarch64_sdk/lib  -r
+sudo cp ~/qt_designer_env/mkspecs/qt_lib_designer.pri  /opt/QT5.5.1/aarch64_sdk/mkspecs/modules -r
+sudo cp ~/qt_designer_env/pkgconfig/Qt5Designer.pc /opt/QT5.5.1/aarch64_sdk/lib/pkgconfig -r 
+sudo cp ~/qt_designer_env/pkgconfig/Qt5DesignerComponents.pc /opt/QT5.5.1/aarch64_sdk/lib/pkgconfig -r 
