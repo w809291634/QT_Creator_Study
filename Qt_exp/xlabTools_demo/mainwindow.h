@@ -10,15 +10,25 @@
 #include <QSerialPort>
 #include <QSerialPortInfo>
 #include <QMessageBox>
-#include <QTime>
 #include <QToolTip>
-#include <QMouseEvent>
 
-#define BIT_0               (1<<0)
-#define BIT_1               (1<<1)
-#define BIT_2               (1<<2)
-#define BIT_3               (1<<3)
-#define ARRAY(x)            (sizeof(x)/sizeof(x[0]))
+#define BIT_0                   (1<<0)
+#define BIT_1                   (1<<1)
+#define BIT_2                   (1<<2)
+#define BIT_3                   (1<<3)
+#define BIT_4                   (1<<4)
+#define BIT_5                   (1<<5)
+#define BIT_6                   (1<<6)
+#define BIT_7                   (1<<7)
+#define ARRAY(x)                (sizeof(x)/sizeof(x[0]))
+#define INFO_LISTWIDGET_UPDATE(info)        {ui->info_listWidget->addItem(info); \
+                                            ui->info_listWidget->scrollToBottom();}
+#define CLEAN_RECV_DATA         {recv_data_whole.clear();recv_show_whole.clear();}
+#define RECV_CMD_MAX_LEN        256
+
+#define ZIGEE_RES_TIMER_START   {zigbee_res_timer->start(1000);}
+#define ZIGEE_RECV_CMD_OK       {zigbee_Sem.release();}
+
 
 /* zigbee */
 // 网络短地址范围 0xFFFF
@@ -39,12 +49,28 @@ private:
 
     /** 串口管理 **/
     QSharedPointer<QSerialPort> Serial;
-    QString m_hexdata_space;    // 串口接收数据（带空格hex格式字符串形式）
-    QByteArray m_rawdata;       // 串口接收数据
+    QByteArray recv_raw_whole="";
+    QString recv_data_whole="";
+    QString recv_show_whole="";
 
-    bool m_display_recv=0;          // 显示接收数据的显示
-    unsigned long m_Rec_Num = 0;    // 接收数
-    unsigned long m_Send_Num = 0;   // 发送数
+    bool m_display_recv=0;              // 显示接收数据的显示
+    unsigned long m_Rec_Num = 0;        // 接收数
+    unsigned long m_Send_Num = 0;       // 发送数
+
+    /** zigbee **/
+    QSemaphore zigbee_Sem{1};           // 指令信号量
+    unsigned short zigbee_flag;         // zigbee标志位
+    // 位0：是否需要读配置
+    // 位1：保留
+    // 位2：是否测试过AT指令
+    // 为3：是否支持AT指令
+    // 位4：保留
+    unsigned short zigbee_count;         // zigbee标志位
+
+    QTimer* zigbee_cycle_timer;         // 周期定时器
+    QTimer* zigbee_res_timer;           // 指令回复超时 定时器.start会复位
+
+    // 其他指令就是
 
     /** 公用部分 **/
     QTime m_time;
@@ -58,6 +84,7 @@ private:
 private slots:
     /** 公共状态更新 **/
     void init_app_ui();
+    void init_app_timer();
     void get_time();
 
     /** 串口管理接口函数 **/
@@ -66,7 +93,7 @@ private slots:
     void serial_close();            // 关闭串口
     void serial_ui_update();        // 封装如上函数
 
-    void serial_write(QByteArray &hex,QString display_string="");
+    void serial_write(QByteArray &hex,QString display_string="",QString notes="");
     int serial_read();
 
     /** 字符处理功能 **/
@@ -75,12 +102,14 @@ private slots:
     QString Add_Space(int x, QString z);
 
     /** zigbee 相关功能函数 **/
-    void zigbee_get_type();
     void zigbee_read_config();
+    void zigbee_read_config_handle();
+    void zigbee_read_config_timeout();
+    void zigbee_data_handle(QByteArray& data,QString& display_data);
     void zigbee_write_config();
-    void zigbee_data_handle();
+    void zigbee_read_config_reset();
 
-
+    void zigbee_ui_state_update();
     /** ui槽函数 **/
     // 软件设置 组box
     void on_pushButton_OpenCom_clicked();

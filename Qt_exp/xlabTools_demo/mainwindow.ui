@@ -773,7 +773,7 @@
               </widget>
              </item>
              <item>
-              <widget class="QLabel" name="label_6">
+              <widget class="QLabel" name="SendTime_unit_label">
                <property name="text">
                 <string>ms</string>
                </property>
@@ -976,7 +976,6 @@
    </attribute>
    <addaction name="actionZigBee"/>
   </widget>
-  <widget class="QStatusBar" name="statusBar"/>
   <action name="actionZigBee">
    <property name="text">
     <string>ZigBee(&amp;Z)</string>
@@ -991,5 +990,38 @@
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>send_cycle_cBox</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>SendTime_ledit</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1290</x>
+     <y>661</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1231</x>
+     <y>663</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>send_cycle_cBox</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>SendTime_unit_label</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1292</x>
+     <y>663</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1266</x>
+     <y>667</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>
