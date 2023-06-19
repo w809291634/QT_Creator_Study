@@ -352,14 +352,23 @@ void MainWindow::zigbee_cmd_reset(bool update_ui)
 
 // zigbee 读取配置
 // 获取一次类型
-void MainWindow::zigbee_read_config()
+// at_test 是否进行at测试 1进行 0不进行
+void MainWindow::zigbee_read_config(bool at_test)
 {
     if(Serial->isOpen()){
         zigbee_cmd_reset();
         zigbee_flag |= BIT_0;
+        if(!at_test)
+            zigbee_flag |= BIT_2;
         zigbee_ui_state_update();
         ZIGBEE_RES_TIMER_START;
     }
+}
+
+// 不需要进行AT测试
+void MainWindow::zigbee_read_config_NoAtTest()
+{
+    zigbee_read_config(false);
 }
 
 // 发送相关读配置命令 的周期函数
@@ -449,6 +458,8 @@ void MainWindow::zigbee_data_handle(QByteArray& data,QString& display_data)
         zigbee_cmd_reset();
 
     /** 处理主动上报的显示 **/
+    //协调器端
+
 
     /** 测试 是否 支持AT指令 **/
     if(!(zigbee_flag & BIT_2) && current_cmd.contains("ATE0")){
@@ -789,7 +800,7 @@ void MainWindow::zigbee_write_config_handle()
                 zigbee_cmd_reset(false);
                 // 需要一定时间延时，否则指令错误
                 if(Serial->isOpen())
-                    QTimer::singleShot(1000,this,SLOT(zigbee_read_config()));
+                    QTimer::singleShot(1000,this,SLOT(zigbee_read_config_NoAtTest()));
                 break;
             }
             default: zigbee_cmd_reset(); return;
@@ -799,36 +810,59 @@ void MainWindow::zigbee_write_config_handle()
         ZIGBEE_RES_TIMER_START;                         // 重新激活响应定时器
     }else{
         /* 不支持 AT 指令 */
-        // FE 28 29 00 02 00 00 00 00 7B 50 41 4E 49 44 3D 38 31 39
-        // 30 2C 4E 4F 44 45 5F 54 59 50 45 3D 30 2C 43 48 41 4E 4E 45 4C 3D 32 30 7D 5c
+        // FE 28 29 00 02 00 00 00 00
+        // 7B 50 41 4E 49 44 3D 38 31 39 30 2C 4E 4F 44 45 5F 54 59 50 45 3D 30 2C 43 48 41 4E 4E 45 4C 3D 32 30 7D 5c
         QString cmd;
         switch(zigbee_count++)
         {
-            case 1: {
+            case 0: {
+                QString cmd_buf1="FE";
+                QString cmd_buf2;                           // 一个字节的长度
+                QString cmd_buf3="29 00";                   // 固定的命令
+                QString cmd_buf4="02 00 00 00 00";          // 固定的数据头部
+                QString cmd_buf5;                           // 校验
+
+                // 处理数据
                 QString panid=ui->lineEdit_Panid->text();
                 int node=ui->comboBox_Mold->currentIndex();
                 QString channel=ui->comboBox_Channel->currentText();
-//                QString app_data=QString("{PANID=%1,NODE_TYPE=%2,CHANNEL=%3}").arg().arg()
+                QString app_data=QString("{PANID=%1,NODE_TYPE=%2,CHANNEL=%3}")
+                        .arg(panid).arg(node).arg(channel);
+                QByteArray app_data_arr=app_data.toLatin1().toHex().toUpper();
+                QString app_data_hex=Add_Space(0,app_data_arr);
+                cmd_buf4=cmd_buf4+app_data_hex;
 
+                // 数据长度
+                cmd_buf2=QString("%1").arg(app_data.length()+5,0,16);
 
+                // 计算校验
+                cmd = cmd_buf1+cmd_buf2+cmd_buf3+cmd_buf4;
+                cmd.remove(" ");
+                cmd=Add_Space(0,cmd);               // 差校验位
+                QByteArray cmd_buf_arr;
+                StringToHex(cmd,cmd_buf_arr);
+                char _xor=xor_count(cmd_buf_arr,1,static_cast<unsigned char>(cmd_buf_arr.length()-1));
+                char string[3]={0};
+                sprintf(string,"%x",_xor);          // 按16进制转换
+                cmd=cmd+' '+QString(string);
                 ZIGBEE_CMD_NO_DATA;
                 break;
             }
-            case 2:{
+            case 1:{
                 zigbee_cmd_reset(false);
                 // 需要一定时间延时，否则指令错误
                 if(Serial->isOpen())
-                    QTimer::singleShot(1000,this,SLOT(zigbee_read_config()));
+                    QTimer::singleShot(1000,this,SLOT(zigbee_read_config_NoAtTest()));
                 break;
             }
             default: zigbee_cmd_reset(); return;
         }
-        QByteArray byte_arr= cmd.toLatin1();
+        QByteArray byte_arr;
+        StringToHex(cmd,byte_arr);
         serial_write(byte_arr,cmd);
-        ZIGBEE_RES_TIMER_START;                         // 重新激活响应定时器                     // 重新激活响应定时器
+        ZIGBEE_RES_TIMER_START;                         // 重新激活响应定时器
     }
 }
-
 
 /*********************** ui槽函数 ***********************/
 /** 软件设置 组box **/

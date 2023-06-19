@@ -11,6 +11,7 @@
 #include <QSerialPortInfo>
 #include <QMessageBox>
 #include <QToolTip>
+#include <iostream>
 
 #define BIT_0                   (1<<0)
 #define BIT_1                   (1<<1)
@@ -112,7 +113,8 @@ private slots:
     void zigbee_ui_state_update();
 
     void zigbee_cmd_reset(bool update_ui=true);
-    void zigbee_read_config();
+    void zigbee_read_config(bool at_test=true);
+    void zigbee_read_config_NoAtTest();
     void zigbee_read_config_handle();
     void zigbee_data_handle(QByteArray& data,QString& display_data);
     void zigbee_cmd_timeout();
