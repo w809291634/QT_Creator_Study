@@ -9,6 +9,8 @@ MainWindow::MainWindow(QWidget *parent) :
     /* 建立串口 */
     Serial.reset(new QSerialPort());
     connect(Serial.data(),SIGNAL(readyRead()),SLOT(serial_read()));
+    connect(Serial.data(),SIGNAL(error(QSerialPort::SerialPortError)),
+            SLOT(serial_error(QSerialPort::SerialPortError)));
 
     init_app_ui();
     init_app_timer();
@@ -35,15 +37,21 @@ void MainWindow::init_app_ui()
     ui->SendTime_ledit->setVisible(false);
     ui->SendTime_unit_label->setVisible(false);
 
+    // 数据显示设置
+    ui->comboBox_Set_Rec->setCurrentIndex(1);
+    ui->comboBox_Set_Send->setCurrentIndex(1);
+
     // 首次刷新
     serial_get_availablePorts();
+    get_time();
     serial_ui_update();
 
     // 输入限制
     Regexp_Na_Hex.setPattern("^([0-9a-fA-F][0-9a-fA-F])(\\ [0-9a-fA-F][0-9a-fA-F])$");
     Regexp_Data_Ascii.setPattern("[a-zA-Z0-9?=_,.{} ]{1,250}");     //当输入模式为Ascii时限制数据长度最大为FF
     Regexp_Data_Hex.setPattern("[0-9a-fA-F ]{1,749}");              //当输入模式为Hex时限制数据长度最大为FF
-    ui->lineEdit_Panid->setValidator(new QIntValidator(1, 16383,ui->lineEdit_Panid));
+    Panid_RegExp.setPattern("(\\d){4}|1[0-6][0-3][0-8][0-3]");
+    ui->lineEdit_Panid->setValidator(new QRegExpValidator(Panid_RegExp,this));
     ui->lineEdit_SendNa->setValidator(new QRegExpValidator(Regexp_Na_Hex,ui->lineEdit_SendNa));
     ui->SendData_ledit->setValidator(new QRegExpValidator(Regexp_Data_Ascii,ui->SendData_ledit));
 }
@@ -74,11 +82,6 @@ void MainWindow::serial_ui_update()
         ui->label_State->setText("打开串口");
         ui->comboBox_Com->setEnabled(true);
         ui->comboBox_Baud->setEnabled(true);
-
-        /* zigbee相关按钮变化 */
-        ui->pushButton_Read->setEnabled(false);
-        ui->pushButton_Write->setEnabled(false);
-        ui->send_data_btn->setEnabled(false);
     }
     else
     {
@@ -87,11 +90,6 @@ void MainWindow::serial_ui_update()
         ui->label_State->setText("关闭串口");
         ui->comboBox_Com->setEnabled(false);
         ui->comboBox_Baud->setEnabled(false);
-
-        /* zigbee相关按钮变化 */
-        ui->pushButton_Read->setEnabled(true);
-        ui->pushButton_Write->setEnabled(true);
-        ui->send_data_btn->setEnabled(true);
     }
 }
 
@@ -162,9 +160,12 @@ bool MainWindow::serial_open()
     else Serial->setBaudRate(QSerialPort::Baud115200);
 
     ret=Serial->open(QSerialPort::ReadWrite);   // 打开串口并设置为读写模式
+    serial_ui_update();
     if(!ret)    // 提示 打开失败原因
         QMessageBox::warning(this,"Connection Error",Serial->errorString());
-    serial_ui_update();
+    else{
+        zigbee_read_config();
+    }
     return ret;
 }
 
@@ -182,6 +183,7 @@ void MainWindow::serial_close()
 void MainWindow::serial_write(QByteArray &data,QString display_string,QString notes)
 {
     Serial->write(data);
+    current_cmd=display_string;
     m_Send_Num += Serial->bytesToWrite();
 
     // 显示 信息
@@ -190,6 +192,7 @@ void MainWindow::serial_write(QByteArray &data,QString display_string,QString no
         display_string.remove("\r");display_string.remove("\n");
         QString info=QString("[%1 %2]<--%3").arg(m_Time_str).arg(m_rf_type).arg(display_string);
         ui->info_listWidget->addItem(info+notes);
+        ui->info_listWidget->scrollToBottom();
     }
 }
 
@@ -209,6 +212,18 @@ int MainWindow::serial_read()
     // 数据处理
     zigbee_data_handle(m_rawdata,m_hexdata_space);
     return 0;
+}
+
+void MainWindow::serial_error(QSerialPort::SerialPortError serialPortError)
+{
+    switch (serialPortError) {
+        case QSerialPort::ResourceError:
+        serial_ui_update();
+        zigbee_cmd_reset();
+        break;
+        default:
+        break;
+    }
 }
 
 /*********************** 字符处理功能 ***********************/
@@ -282,30 +297,35 @@ void MainWindow::zigbee_app_init()
     zigbee_cycle_timer = new QTimer(this);
     connect(zigbee_cycle_timer,SIGNAL(timeout()),
             this,SLOT(zigbee_read_config_handle()));
+    connect(zigbee_cycle_timer,SIGNAL(timeout()),
+            this,SLOT(zigbee_write_config_handle()));
     zigbee_cycle_timer->start(100);
 
     zigbee_res_timer = new QTimer(this);
     zigbee_res_timer->setSingleShot(true);
     connect(zigbee_res_timer,SIGNAL(timeout()),
-            this,SLOT(zigbee_read_config_timeout()));
+            this,SLOT(zigbee_cmd_timeout()));
     // 进行一次复位
-    zigbee_read_config_reset();
+    zigbee_cmd_reset();
 }
 
 // zigbee 更新 ui 相关
 void MainWindow::zigbee_ui_state_update(){
-    /** 读取配置 **/
-    if(zigbee_flag & BIT_0){
+    /** 读写状态 **/
+    if((zigbee_flag & BIT_0) || (zigbee_flag & BIT_1)){
+        /* 正在进行读写 */
         ui->pushButton_Read->setEnabled(false);
         ui->pushButton_Write->setEnabled(false);
+        ui->send_data_btn->setEnabled(false);
     }else{
         ui->pushButton_Read->setEnabled(true);
         ui->pushButton_Write->setEnabled(true);
+        ui->send_data_btn->setEnabled(true);
     }
 }
 
-// zigbee 读配置复位
-void MainWindow::zigbee_read_config_reset()
+// zigbee 指令状态复位
+void MainWindow::zigbee_cmd_reset(bool update_ui)
 {
     // 标志位清零
     zigbee_flag=0;
@@ -322,7 +342,8 @@ void MainWindow::zigbee_read_config_reset()
     zigbee_res_timer->stop();
 
     // ui 更新
-    zigbee_ui_state_update();
+    if(update_ui)
+        zigbee_ui_state_update();
 
     // 清理接收数据
     CLEAN_RECV_DATA;
@@ -333,9 +354,12 @@ void MainWindow::zigbee_read_config_reset()
 // 获取一次类型
 void MainWindow::zigbee_read_config()
 {
-    zigbee_flag |= BIT_0;
-    zigbee_ui_state_update();
-    ZIGBEE_RES_TIMER_START;
+    if(Serial->isOpen()){
+        zigbee_cmd_reset();
+        zigbee_flag |= BIT_0;
+        zigbee_ui_state_update();
+        ZIGBEE_RES_TIMER_START;
+    }
 }
 
 // 发送相关读配置命令 的周期函数
@@ -357,7 +381,7 @@ void MainWindow::zigbee_read_config_handle()
     }
 
     /* 开始读取配置 */
-    if( zigbee_flag & BIT_3){
+    if( zigbee_at_flag ){
         /* 支持 AT 指令 */
         QString cmd;
         switch(zigbee_count++)
@@ -366,12 +390,12 @@ void MainWindow::zigbee_read_config_handle()
             case 1: cmd = "AT+LOGICALTYPE?\r\n"; break;
             case 2: cmd = "AT+CHANNEL?\r\n"; break;
             case 3: cmd = "AT+PANID?\r\n"; break;
-            default:zigbee_read_config_reset();return;
+            default:zigbee_cmd_reset();return;          // 自动结束一个查询时序
         }
         QByteArray byte_arr= cmd.toLatin1();
         serial_write(byte_arr,cmd);
         ZIGBEE_CMD_HAVE_DATA;
-        ZIGBEE_RES_TIMER_START;                  // 重新激活响应定时器
+        ZIGBEE_RES_TIMER_START;                         // 重新激活响应定时器
     }else{
         /* 不支持 AT 指令 */
         QString cmd;
@@ -387,13 +411,13 @@ void MainWindow::zigbee_read_config_handle()
             case 0: cmd = "FE 07 29 00 02 00 00 01 02 00 00 2F"; break;
             //{TYPE=?,PANID=?,CHANNEL=?}
             case 1: cmd = "FE 1F 29 00 02 00 00 00 00 7B 54 59 50 45 3D 3F 2C 50 41 4E 49 44 3D 3F 2C 43 48 41 4E 4E 45 4C 3D 3F 7D 39"; break;
-            default:zigbee_read_config_reset();return;
+            default:zigbee_cmd_reset();return;          // 自动结束一个查询时序
         }
         QByteArray byte_arr;
         StringToHex(cmd,byte_arr);
         serial_write(byte_arr,cmd);
         ZIGBEE_CMD_HAVE_DATA;
-        ZIGBEE_RES_TIMER_START;                  // 重新激活响应定时器
+        ZIGBEE_RES_TIMER_START;                         // 重新激活响应定时器
     }
 }
 
@@ -401,6 +425,14 @@ void MainWindow::zigbee_read_config_handle()
 // 串口数据处理
 void MainWindow::zigbee_data_handle(QByteArray& data,QString& display_data)
 {
+#define  CMD_ERROR          else if(recv_data_whole.contains("ERR: Bad command")){ \
+                                QString cmd_flag="ERR: Bad command"; \
+                                QString info1=QString("[%1 %2]-->%3"). \
+                                        arg(m_Time_str).arg(m_rf_type).arg(cmd_flag); \
+                                INFO_LISTWIDGET_UPDATE(info1); \
+                                zigbee_cmd_reset(); \
+                            }
+
     bool ok;
     recv_raw_whole+=data;
     recv_data_whole+=QString(data);
@@ -414,14 +446,17 @@ void MainWindow::zigbee_data_handle(QByteArray& data,QString& display_data)
 
     /* 长度检查 */
     if(recv_data_whole.length()>RECV_CMD_MAX_LEN)
-        zigbee_read_config_reset();
+        zigbee_cmd_reset();
+
+    /** 处理主动上报的显示 **/
 
     /** 测试 是否 支持AT指令 **/
-    if(!(zigbee_flag & BIT_2)){
+    if(!(zigbee_flag & BIT_2) && current_cmd.contains("ATE0")){
         if(recv_data_whole.contains("OK\r\n")){
             /* 表示支持AT指令 */
             zigbee_flag |= BIT_2;       // 必须激活标记，否则出现bug
             zigbee_flag |= BIT_3;
+            zigbee_at_flag=true;
 
             // 更新信息
             QString info=QString("[%1 %2]-->%3")
@@ -430,12 +465,28 @@ void MainWindow::zigbee_data_handle(QByteArray& data,QString& display_data)
             CLEAN_RECV_DATA;
             ZIGBEE_RECV_CMD_OK;
         }
+        // ERR:Bad command
+        CMD_ERROR;
         return;
     }
 
     /** 这里表示AT测试已经完成 **/
-    if(zigbee_flag & BIT_3){
+    if(zigbee_at_flag){
         /** 支持AT **/
+        // 这个命令是否有数据帧
+        if(!(zigbee_flag & BIT_6)){
+            if(recv_data_whole.contains("OK\r\n")){
+                // 更新信息
+                QString info=QString("[%1 %2]-->%3")
+                        .arg(m_Time_str).arg(m_rf_type).arg("OK");
+                INFO_LISTWIDGET_UPDATE(info);
+                CLEAN_RECV_DATA;
+                ZIGBEE_RECV_CMD_OK;
+            }
+            // ERR:Bad command
+            CMD_ERROR;
+            return; // 其他数据不关心
+        }
         // "AT+MAC?\r\n" 回复 查询节点的mac地址（路由和终端）
         if(recv_data_whole.contains("+MAC") &&
                 recv_data_whole.contains("OK\r\n")){
@@ -535,6 +586,25 @@ void MainWindow::zigbee_data_handle(QByteArray& data,QString& display_data)
             CLEAN_RECV_DATA;
             ZIGBEE_RECV_CMD_OK;
         }
+        // "AT+RESET?\r\n" 回复
+        else if(recv_data_whole.contains("+HW:CC2530") &&
+                recv_data_whole.contains("+RDY")){
+            QString cmd_flag1="+HW:CC2530";
+            QString cmd_flag2="+RDY";
+
+            // 更新信息
+            QString info1=QString("[%1 %2]-->%3").
+                    arg(m_Time_str).arg(m_rf_type).arg(cmd_flag1);
+            QString info2=QString("[%1 %2]-->%3").
+                    arg(m_Time_str).arg(m_rf_type).arg(cmd_flag2);
+            INFO_LISTWIDGET_UPDATE(info1);
+            INFO_LISTWIDGET_UPDATE(info2);
+            CLEAN_RECV_DATA;
+            ZIGBEE_RECV_CMD_OK;
+        }
+        // ERR:Bad command
+        CMD_ERROR;
+
         // 其他的指令 自动超时复位
     }
     else{
@@ -550,15 +620,18 @@ void MainWindow::zigbee_data_handle(QByteArray& data,QString& display_data)
             QString info1=QString("[%1 %2]-->%3").
                     arg(m_Time_str).arg(m_rf_type).arg(cmd_flag);
             INFO_LISTWIDGET_UPDATE(info1);
-            // 根据读写标志判断接下来有无数据帧
+            // 这个命令是否有数据帧
             if(!(zigbee_flag & BIT_6)){
                 CLEAN_RECV_DATA;
                 ZIGBEE_RECV_CMD_OK;
+                return; // 其他数据不关心
             }
         }
         // 错误的指令响应帧
         else if(recv_show_whole.contains("FE 01 69 00 01 68")){
-            zigbee_read_config_reset();
+            zigbee_cmd_reset();
+            qDebug()<< "ZIGBEE:指令出现错误";
+            return; // 其他数据不关心
         }
         // 获取MAC地址
         if(recv_show_whole.contains("FE 0E 69 80 00 00 01 02")){
@@ -646,27 +719,116 @@ void MainWindow::zigbee_data_handle(QByteArray& data,QString& display_data)
 
 // 串口命令的返回情况2
 // 读取配置超时
-void MainWindow::zigbee_read_config_timeout()
+void MainWindow::zigbee_cmd_timeout()
 {
     /* 测试 是否 支持AT指令 */
-    if(!(zigbee_flag & BIT_2)){
+    if(!(zigbee_flag & BIT_2) && current_cmd.contains("ATE0")){
         /* 表示不支持AT指令 */
         zigbee_flag |= BIT_2;       // 必须激活标记，否则出现bug
         zigbee_flag &= ~BIT_3;
+        zigbee_at_flag=false;
         CLEAN_RECV_DATA;
         ZIGBEE_RECV_CMD_OK;
         return;
     }
 
     /* 这里AT测试完成 读配置超时 */
-    zigbee_read_config_reset();
+    zigbee_cmd_reset();
 }
 
 // zigbee 写入配置
 void MainWindow::zigbee_write_config()
 {
-
+    if(Serial->isOpen()){
+        zigbee_cmd_reset();
+        zigbee_flag |= BIT_1;
+        zigbee_ui_state_update();
+        ZIGBEE_RES_TIMER_START;
+    }
 }
+
+// zigbee 写配置处理函数
+void MainWindow::zigbee_write_config_handle()
+{
+    /* 如果不需要 读取 配置退出 */
+    if(!(zigbee_flag & BIT_1)) return;
+
+    /* 没有信号量 不发送命令 */
+    if(!zigbee_Sem.tryAcquire()) return;
+
+    /* 开始写入配置 */
+    if( zigbee_at_flag ){
+        /* 支持 AT 指令 */
+        QString cmd;
+        switch(zigbee_count++)
+        {
+            case 0: {
+                int type=ui->comboBox_Mold->currentIndex();
+                cmd = QString("AT+LOGICALTYPE=%1\r\n").arg(type);
+                ZIGBEE_CMD_NO_DATA;
+                break;
+            }
+            case 1: {
+                QString channel=ui->comboBox_Channel->currentText();
+                cmd = QString("AT+CHANNEL=%1\r\n").arg(channel);
+                ZIGBEE_CMD_NO_DATA;
+                break;
+            }
+            case 2: {
+                QString Panid=ui->lineEdit_Panid->text();
+                cmd = QString("AT+PANID=%1\r\n").arg(Panid);
+                ZIGBEE_CMD_NO_DATA;
+                break;
+            }
+            case 3: {
+                cmd = "AT+RESET\r\n";
+                ZIGBEE_CMD_HAVE_DATA;
+                break;
+            }
+            case 4:{
+                zigbee_cmd_reset(false);
+                // 需要一定时间延时，否则指令错误
+                if(Serial->isOpen())
+                    QTimer::singleShot(1000,this,SLOT(zigbee_read_config()));
+                break;
+            }
+            default: zigbee_cmd_reset(); return;
+        }
+        QByteArray byte_arr= cmd.toLatin1();
+        serial_write(byte_arr,cmd);
+        ZIGBEE_RES_TIMER_START;                         // 重新激活响应定时器
+    }else{
+        /* 不支持 AT 指令 */
+        // FE 28 29 00 02 00 00 00 00 7B 50 41 4E 49 44 3D 38 31 39
+        // 30 2C 4E 4F 44 45 5F 54 59 50 45 3D 30 2C 43 48 41 4E 4E 45 4C 3D 32 30 7D 5c
+        QString cmd;
+        switch(zigbee_count++)
+        {
+            case 1: {
+                QString panid=ui->lineEdit_Panid->text();
+                int node=ui->comboBox_Mold->currentIndex();
+                QString channel=ui->comboBox_Channel->currentText();
+//                QString app_data=QString("{PANID=%1,NODE_TYPE=%2,CHANNEL=%3}").arg().arg()
+
+
+                ZIGBEE_CMD_NO_DATA;
+                break;
+            }
+            case 2:{
+                zigbee_cmd_reset(false);
+                // 需要一定时间延时，否则指令错误
+                if(Serial->isOpen())
+                    QTimer::singleShot(1000,this,SLOT(zigbee_read_config()));
+                break;
+            }
+            default: zigbee_cmd_reset(); return;
+        }
+        QByteArray byte_arr= cmd.toLatin1();
+        serial_write(byte_arr,cmd);
+        ZIGBEE_RES_TIMER_START;                         // 重新激活响应定时器                     // 重新激活响应定时器
+    }
+}
+
 
 /*********************** ui槽函数 ***********************/
 /** 软件设置 组box **/
@@ -710,7 +872,11 @@ void MainWindow::on_pushButton_Read_clicked()
 // 写入 配置
 void MainWindow::on_pushButton_Write_clicked()
 {
-    zigbee_read_config_reset();
+    if(zigbee_at_flag && ui->comboBox_Mold->currentIndex()==0){
+        QMessageBox::warning(this,"类型错误","zigbee节点暂不支持修改为协调器");
+        return;
+    }
+    zigbee_write_config();
 }
 
 /** 数据显示设置 组box **/
@@ -771,6 +937,3 @@ void MainWindow::on_lineEdit_SendNa_inputRejected()
         ui->lineEdit_SendNa->setText(new_text);
     }
 }
-
-
-

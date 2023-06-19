@@ -50,6 +50,7 @@ private:
 
     /** 串口管理 **/
     QSharedPointer<QSerialPort> Serial;
+    QString current_cmd="";
     QByteArray recv_raw_whole="";
     QString recv_data_whole="";
     QString recv_show_whole="";
@@ -60,20 +61,19 @@ private:
 
     /** zigbee **/
     QSemaphore zigbee_Sem{1};           // 指令信号量
+    bool zigbee_at_flag=false;          // zigbee是否支持AT指令，每次读刷新
     unsigned short zigbee_flag;         // zigbee标志位
-    // 位0：是否需要读配置
-    // 位1：保留
+    // 位0：是否需要读取配置
+    // 位1：是否进行写入配置
     // 位2：是否测试过AT指令
-    // 为3：是否支持AT指令
+    // 为3：是否支持AT指令(废弃)
     // 位4：保留
     // 位5：保留
-    // 位6：指令有无数据帧，读写标志位
-    unsigned short zigbee_count = 0;         // zigbee标志位
+    // 位6：指令有无数据帧，读写标志位，1表示读 0表示写
+    unsigned short zigbee_count = 0;    // 发送指令的计数
 
     QTimer* zigbee_cycle_timer;         // 周期定时器
     QTimer* zigbee_res_timer;           // 指令回复超时 定时器.start会复位
-
-    // 其他指令就是
 
     /** 公用部分 **/
     QTime m_time;
@@ -83,6 +83,7 @@ private:
     /** 输入限制 **/
     QRegExp Regexp_Na_Ascii,Regexp_Na_Hex;
     QRegExp Regexp_Data_Ascii,Regexp_Data_Hex;
+    QRegExp Panid_RegExp;
 
 private slots:
     /** 公共状态更新 **/
@@ -98,6 +99,7 @@ private slots:
 
     void serial_write(QByteArray &hex,QString display_string="",QString notes="");
     int serial_read();
+    void serial_error(QSerialPort::SerialPortError serialPortError);
 
     /** 字符处理功能 **/
     void StringToHex(QString str,QByteArray &send_data);
@@ -107,14 +109,16 @@ private slots:
 
     /** zigbee 相关功能函数 **/
     void zigbee_app_init();
+    void zigbee_ui_state_update();
+
+    void zigbee_cmd_reset(bool update_ui=true);
     void zigbee_read_config();
     void zigbee_read_config_handle();
-    void zigbee_read_config_timeout();
     void zigbee_data_handle(QByteArray& data,QString& display_data);
+    void zigbee_cmd_timeout();
     void zigbee_write_config();
-    void zigbee_read_config_reset();
+    void zigbee_write_config_handle();
 
-    void zigbee_ui_state_update();
     /** ui槽函数 **/
     // 软件设置 组box
     void on_pushButton_OpenCom_clicked();
