@@ -23,12 +23,13 @@
 #define ARRAY(x)                (sizeof(x)/sizeof(x[0]))
 #define INFO_LISTWIDGET_UPDATE(info)        {ui->info_listWidget->addItem(info); \
                                             ui->info_listWidget->scrollToBottom();}
-#define CLEAN_RECV_DATA         {recv_data_whole.clear();recv_show_whole.clear();}
-#define RECV_CMD_MAX_LEN        256
+#define CLEAN_RECV_DATA             {recv_raw_whole.clear();recv_data_whole.clear();recv_show_whole.clear();}
+#define RECV_CMD_MAX_LEN            256
 
-#define ZIGEE_RES_TIMER_START   {zigbee_res_timer->start(1000);}
-#define ZIGEE_RECV_CMD_OK       {zigbee_Sem.release();}
-
+#define ZIGBEE_RES_TIMER_START      {zigbee_res_timer->start(1000);}
+#define ZIGBEE_RECV_CMD_OK          {zigbee_Sem.release();}
+#define ZIGBEE_CMD_HAVE_DATA        {zigbee_flag|=BIT_6;}
+#define ZIGBEE_CMD_NO_DATA          {zigbee_flag&=~BIT_6;}
 
 /* zigbee */
 // 网络短地址范围 0xFFFF
@@ -65,7 +66,9 @@ private:
     // 位2：是否测试过AT指令
     // 为3：是否支持AT指令
     // 位4：保留
-    unsigned short zigbee_count;         // zigbee标志位
+    // 位5：保留
+    // 位6：指令有无数据帧，读写标志位
+    unsigned short zigbee_count = 0;         // zigbee标志位
 
     QTimer* zigbee_cycle_timer;         // 周期定时器
     QTimer* zigbee_res_timer;           // 指令回复超时 定时器.start会复位
@@ -100,8 +103,10 @@ private slots:
     void StringToHex(QString str,QByteArray &send_data);
     char xor_count(QByteArray array,unsigned char s1,unsigned char s2);
     QString Add_Space(int x, QString z);
+    int Get_DelSpaceString_Length(QString str);
 
     /** zigbee 相关功能函数 **/
+    void zigbee_app_init();
     void zigbee_read_config();
     void zigbee_read_config_handle();
     void zigbee_read_config_timeout();
