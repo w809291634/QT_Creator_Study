@@ -629,14 +629,6 @@ void MainWindow::zigbee_read_config_handle()
 // 串口数据处理
 void MainWindow::zigbee_data_handle(QByteArray& data,QString& display_data)
 {
-#define  CMD_ERROR          else if(recv_data_whole.contains("ERR: Bad command")){ \
-                                QString cmd_flag="ERR: Bad command"; \
-                                QString info1=QString("[%1 %2]-->%3"). \
-                                        arg(m_Time_str).arg(m_rf_type).arg(cmd_flag); \
-                                INFO_LISTWIDGET_UPDATE(info1); \
-                                zigbee_cmd_reset(); \
-                            }
-
     bool ok;
     recv_raw_whole+=data;
     recv_data_whole+=QString(data);
@@ -668,8 +660,13 @@ void MainWindow::zigbee_data_handle(QByteArray& data,QString& display_data)
             CLEAN_RECV_DATA;
             ZIGBEE_RECV_CMD_OK;
         }
-        // ERR:Bad command
-        CMD_ERROR;
+        else if(recv_data_whole.contains("ERR: Bad command")){
+            QString cmd_flag="ERR: Bad command";
+            QString info1=QString("[%1 %2]-->%3").
+                    arg(m_Time_str).arg(m_rf_type).arg(cmd_flag);
+            INFO_LISTWIDGET_UPDATE(info1); \
+            zigbee_cmd_reset();
+        }
         return;
     }
 
@@ -678,6 +675,7 @@ void MainWindow::zigbee_data_handle(QByteArray& data,QString& display_data)
     if(zigbee_at_flag){
         /** 支持AT **/
 #define ZIGBEE_ATCMD_PROCESSED      {int _index=recv_data_whole.indexOf("\r\n"); \
+                                    if(_index==-1)continue; \
                                     recv_data_whole=recv_data_whole.mid(_index+2); \
                                     continue;}                              // 一条指令帧处理完成
 
@@ -686,7 +684,7 @@ void MainWindow::zigbee_data_handle(QByteArray& data,QString& display_data)
 
         while(recv_data_whole.contains("\r\n"))
         {
-            count++;if(count>5)return;                          // 防止错误
+            count++;if(count>5)return;                          // 防止错误，并不会执行
 
             int index=recv_data_whole.indexOf("\r\n");
             QString vaild_cmd=recv_data_whole.mid(0,index);     // 去掉了空格
@@ -785,20 +783,27 @@ void MainWindow::zigbee_data_handle(QByteArray& data,QString& display_data)
                 ZIGBEE_RECV_CMD_OK;
                 ZIGBEE_ATCMD_PROCESSED;
             }
-//            else if(){ ZIGBEE_ATCMD_PROCESSED;}
             // ERR:Bad command
-            CMD_ERROR;
-            // 其他的指令 自动超时复位
+            else if(vaild_cmd.contains("ERR: Bad command")){
+                QString info1=QString("[%1 %2]-->%3").
+                        arg(m_Time_str).arg(m_rf_type).arg(vaild_cmd);
+                INFO_LISTWIDGET_UPDATE(info1); \
+                zigbee_cmd_reset();
+                ZIGBEE_ATCMD_PROCESSED;
+            }
+            // else if(){ ZIGBEE_ATCMD_PROCESSED;}
+            else ZIGBEE_ATCMD_PROCESSED;        // 没有找到记录的类型
         }
     }
     else{
         /** 不支持AT **/
 #define ZIGBEE_CMD_PROCESSED   {int _index=recv_show_whole.indexOf("FE"); \
+                                if(_index==-1)continue; \
                                 recv_show_whole=recv_show_whole.mid(_index+2); \
                                 continue;}                              // 一条指令帧处理完成
 
         while(recv_show_whole.contains("FE")){
-            count++;if(count>5)return;                                  // 防止阻塞
+            count++;if(count>5)return;                                  // 防止错误，并不会执行
 
             /* 进行指令完整校验 */
             int index=recv_show_whole.indexOf("FE");                    // 获取第一个出现 "FE" 帧头的位置
@@ -825,98 +830,114 @@ void MainWindow::zigbee_data_handle(QByteArray& data,QString& display_data)
 
                 /* 进行指令信息判断 */
                 QString CMD=vaild_cmd.mid(6,5);         // 命令帧
-                QString NA=vaild_cmd.mid(12,5);         // 网络地址
-                QString APP_CMD=vaild_cmd.mid(18,5);    // 数据命令
 
-                // 正确的指令响应帧
-                if(vaild_cmd.contains("FE 01 69 00 00 68")){
-                    // "FE 01 69 00 00 68" 正确的指令响应帧
-                    QString info1=QString("[%1 %2]-->%3").
-                            arg(m_Time_str).arg(m_rf_type).arg(vaild_cmd);
-                    INFO_LISTWIDGET_UPDATE(info1);
-                    // 这个命令是否有数据帧
-                    if(!(zigbee_flag & BIT_6)){
+                // 29 00 上位机发送数据到协调器
+                // 69 00 协调器接收到正确指令后的响应帧
+                // 69 80 协调器发送数据到上位机
+
+                /* 响应帧 */
+                if( CMD=="69 00" ){
+                    // 正确的指令响应帧
+                    if(vaild_cmd.contains("FE 01 69 00 00 68")){
+                        // "FE 01 69 00 00 68" 正确的指令响应帧
+                        QString info1=QString("[%1 %2]-->%3").
+                                arg(m_Time_str).arg(m_rf_type).arg(vaild_cmd);
+                        INFO_LISTWIDGET_UPDATE(info1);
+                        // 这个命令是否有数据帧
+                        if(!(zigbee_flag & BIT_6)){
+                            CLEAN_RECV_DATA;
+                            ZIGBEE_RECV_CMD_OK;
+                        }
+                        ZIGBEE_CMD_PROCESSED;
+                    }
+                    // 错误的指令响应帧
+                    else if(vaild_cmd.contains("FE 01 69 00 01 68")){
+                        qDebug()<< "ZIGBEE:指令出现错误";
+                        ZIGBEE_CMD_PROCESSED;
+                    }
+                }
+                /* 协调器发送数据到上位机 */
+                else if( CMD=="69 80" ){
+                    QString NA=vaild_cmd.mid(12,5);         // 网络地址
+                    QString APP_CMD=vaild_cmd.mid(18,5);    // 数据命令
+                    /* 协调器根据给定的网络地址，查询 MAC 地址 */
+                    if(APP_CMD=="01 02"){
+                        // 类似格式："FE 0E 69 80 00 00 01 02 00 00 00 12 4B 00 1B D8 8D E6 15"
+                        // 获取数据帧
+                        QString data_frame=vaild_cmd.mid(4*3,data_len*3-1);
+                        QString mac=data_frame.mid(6*3);
+                        mac.replace(" ",":");
+                        ui->lineEdit_Add->setText(mac);
+
+                        // 更新信息
+                        QString info1=QString("[%1 %2]-->%3").
+                                arg(m_Time_str).arg(m_rf_type).arg(vaild_cmd);
+                        INFO_LISTWIDGET_UPDATE(info1);
                         CLEAN_RECV_DATA;
                         ZIGBEE_RECV_CMD_OK;
+                        ZIGBEE_CMD_PROCESSED;
                     }
-                    ZIGBEE_CMD_PROCESSED;
-                }
-                // 错误的指令响应帧
-                else if(vaild_cmd.contains("FE 01 69 00 01 68")){
-                    qDebug()<< "ZIGBEE:指令出现错误";
-                    ZIGBEE_CMD_PROCESSED;
-                }
-                // 获取MAC地址
-                else if( CMD=="69 80" && APP_CMD=="01 02" ){
-                    // 类似格式："FE 0E 69 80 00 00 01 02 00 00 00 12 4B 00 1B D8 8D E6 15"
-                    // 获取数据帧
-                    QString data_frame=vaild_cmd.mid(4*3,data_len*3-1);
-                    QString mac=data_frame.mid(6*3);
-                    mac.replace(" ",":");
-                    ui->lineEdit_Add->setText(mac);
+                    /* 协调器与上位机之间数据的通信命令 */
+                    else if(APP_CMD=="00 00"){
+                        /* 返回 TYPE PANID CHANNEL */
+                        if(recv_raw_whole.contains("{TYPE=") &&
+                                recv_raw_whole.contains("}") &&
+                                recv_raw_whole.contains("PANID=") &&
+                                recv_raw_whole.contains("CHANNEL=")){
+                            // 类似格式：
+                            // recv_raw_whole:"\xFE\x01i\x00\x00h\xFE&i\x80\x00\x00\x00\x00{TYPE=10000,PANID=8199,CHANNEL=20}\xC7"
+                            // recv_show_whole:"FE 26 69 80 00 00 00 00 7B 54 59 50 45 3D 31 30 30 30 30 2C 50 41 4E 49 44 3D 38 31 39 39 2C 43 48 41 4E 4E 45 4C 3D 32 30 7D C7"
+                            /* 使用 QByteArray 进行数据获取 */
+                            int index1=recv_raw_whole.indexOf("{");
+                            int index2=recv_raw_whole.indexOf("}");
+                            if(index1==-1 && index2==-1) return;
+                            if(index1 > index2) return;
+                            QByteArray data_frame=recv_raw_whole.mid(index1,index2-index1+1);
+                            // 删除“{}”
+                            data_frame.remove(0,1);
+                            data_frame.remove(data_frame.length()-1,1);
+                            QList<QByteArray> data_list=data_frame.split(',');
+                            if(data_list.length()<3) return;
+                            QByteArray panid_pair=data_list[1];
+                            QByteArray channel_pair=data_list[2];
+                            QString panid = panid_pair.replace("PANID=","");
+                            QString channel = channel_pair.replace("CHANNEL=","");
 
-                    // 更新信息
-                    QString info1=QString("[%1 %2]-->%3").
-                            arg(m_Time_str).arg(m_rf_type).arg(vaild_cmd);
-                    INFO_LISTWIDGET_UPDATE(info1);
-                    CLEAN_RECV_DATA;
-                    ZIGBEE_RECV_CMD_OK;
-                    ZIGBEE_CMD_PROCESSED;
-                }
-                // 获取 TYPE PANID CHANNEL
-                else if(recv_raw_whole.contains("{TYPE=") &&
-                        recv_raw_whole.contains("}") &&
-                        recv_raw_whole.contains("PANID=") &&
-                        recv_raw_whole.contains("CHANNEL=")){
-                    // 类似格式：
-                    // recv_raw_whole:"\xFE\x01i\x00\x00h\xFE&i\x80\x00\x00\x00\x00{TYPE=10000,PANID=8199,CHANNEL=20}\xC7"
-                    // recv_show_whole:"FE 26 69 80 00 00 00 00 7B 54 59 50 45 3D 31 30 30 30 30 2C 50 41 4E 49 44 3D 38 31 39 39 2C 43 48 41 4E 4E 45 4C 3D 32 30 7D C7"
-                    /* 使用 QByteArray 进行数据获取 */
-                    int index1=recv_raw_whole.indexOf("{");
-                    int index2=recv_raw_whole.indexOf("}");
-                    if(index1==-1 && index2==-1) return;
-                    if(index1 > index2) return;
-                    QByteArray data_frame=recv_raw_whole.mid(index1,index2-index1+1);
-                    // 删除“{}”
-                    data_frame.remove(0,1);
-                    data_frame.remove(data_frame.length()-1,1);
-                    QList<QByteArray> data_list=data_frame.split(',');
-                    if(data_list.length()<3) return;
-                    QByteArray panid_pair=data_list[1];
-                    QByteArray channel_pair=data_list[2];
-                    QString panid = panid_pair.replace("PANID=","");
-                    QString channel = channel_pair.replace("CHANNEL=","");
+                            ui->lineEdit_Panid->setText(panid);
+                            ui->comboBox_Channel->setCurrentText(channel);
+                            ui->comboBox_Mold->setCurrentIndex(0);
 
-                    ui->lineEdit_Panid->setText(panid);
-                    ui->comboBox_Channel->setCurrentText(channel);
-                    ui->comboBox_Mold->setCurrentIndex(0);
-
-                    // 更新信息
-                    QString info1=QString("[%1 %2]-->%3").
-                            arg(m_Time_str).arg(m_rf_type).arg(vaild_cmd);
-                    INFO_LISTWIDGET_UPDATE(info1);
-                    CLEAN_RECV_DATA;
-                    ZIGBEE_RECV_CMD_OK;
-                    ZIGBEE_CMD_PROCESSED;
+                            // 更新信息
+                            QString info1=QString("[%1 %2]-->%3").
+                                    arg(m_Time_str).arg(m_rf_type).arg(vaild_cmd);
+                            INFO_LISTWIDGET_UPDATE(info1);
+                            CLEAN_RECV_DATA;
+                            ZIGBEE_RECV_CMD_OK;
+                            ZIGBEE_CMD_PROCESSED;
+                        }
+                        /* 其他的信息 不进行处理 仅仅显示 */
+                        else{
+                            // 类似格式：FE 0A 69 80 4B 3D 00 00 7B 44 31 3D 30 7D EB
+                            // 更新信息
+                            QString info1=QString("[%1 %2]-->%3").
+                                    arg(m_Time_str).arg(m_rf_type).arg(vaild_cmd);
+                            INFO_LISTWIDGET_UPDATE(info1);
+                            CLEAN_RECV_DATA;
+                            ZIGBEE_CMD_PROCESSED;
+                        }
+                    }
                 }
-                // 协调器 发送数据 到上位机
-                else if( CMD=="69 80" && APP_CMD=="00 00" ){
-                    // 类似格式：FE 0A 69 80 4B 3D 00 00 7B 44 31 3D 30 7D EB
-                    // 更新信息
-                    QString info1=QString("[%1 %2]-->%3").
-                            arg(m_Time_str).arg(m_rf_type).arg(vaild_cmd);
-                    INFO_LISTWIDGET_UPDATE(info1);
-                    CLEAN_RECV_DATA;
-                    ZIGBEE_CMD_PROCESSED;
+                // 特殊命令
+                else if( CMD=="41 80" ){
+                    QString APP_CMD=vaild_cmd.mid(12,5);    // 数据命令
+                    if( APP_CMD=="02 02" ){
+                        // 类似格式："FE 06 41 80 02 02 00 02 04 00 C1"
+                        CLEAN_RECV_DATA;
+                        ZIGBEE_RECV_CMD_OK;
+                        ZIGBEE_CMD_PROCESSED;
+                    }
                 }
-                // 协调器 上报 手动复位完成
-                else if( CMD=="41 80" && NA=="02 02" ){
-                    // 类似格式："FE 06 41 80 02 02 00 02 04 00 C1"
-                    CLEAN_RECV_DATA;
-                    ZIGBEE_RECV_CMD_OK;
-                    ZIGBEE_CMD_PROCESSED;
-                }
-//                else if(){ZIGBEE_CMD_PROCESSED;}       // 处理其他指令
+//                else if(){ZIGBEE_CMD_PROCESSED;}          // 处理其他指令
                 else ZIGBEE_CMD_PROCESSED;
             }else ZIGBEE_CMD_PROCESSED;
         }
@@ -1185,4 +1206,62 @@ void MainWindow::on_count_num_clear_btn_clicked()
     m_Rec_Num=0;m_Send_Num=0;
     ui->label_RecNum->setText(QString::number(m_Rec_Num));
     ui->label_SendNum->setText(QString::number(m_Send_Num));
+}
+
+// 分析列表信息
+void MainWindow::on_info_listWidget_itemClicked(QListWidgetItem *item)
+{
+    bool ok=false;
+    QString item_str=item->text();
+    int index=item_str.indexOf("FE");                    // 获取第一个出现 "FE" 帧头的位置
+    if(index!=-1){
+        /** hex数据格式处理 **/
+        // 仅保留FE开头的回复帧
+        QString vaild_cmd=item_str.mid(index);
+        qDebug()<< vaild_cmd;
+
+        int i=0;
+        QString SOP=vaild_cmd.mid(0,2);                 // 网络地址
+        QString LEN=vaild_cmd.mid(3*(++i),2);           // 数据帧长度
+        int data_len=LEN.toInt(&ok,16);                 // 数据帧长度（LEN）,去除 SOP、LEN、CMD（2）、FCS
+        if(!ok)return;
+        QString CMD=vaild_cmd.mid(3*(++i),5);           // 命令帧
+        i+=2;
+
+        ui->lineEdit_RecSop->setText(SOP);
+        ui->lineEdit_RecLen->setText(LEN);
+        ui->lineEdit_RecCmd->setText(CMD);
+
+        // 29 00 上位机发送数据到协调器
+        // 69 00 协调器接收到正确指令后的响应
+        // 69 80 协调器发送数据到上位机
+        if(CMD=="29 00"){
+            /** 上位机发送数据到协调器 **/
+            QString NA=vaild_cmd.mid(3*(++i),5);        // 网络地址 上位机发送数据时 多一个 02
+            i+=2;
+            QString APP_CMD=vaild_cmd.mid(3*i,5);       // 应用命令
+            QString FCS=vaild_cmd.mid(vaild_cmd.length()-2);// 校验
+
+            QString data_frame=vaild_cmd.mid(3*4,data_len*3-1); // 截取数据帧
+            QString APP_DATA=data_frame.mid(3*5);       // 应用数据
+
+            ui->lineEdit_RecNa->setText(NA);
+            ui->lineEdit_RecAppCmd->setText(APP_CMD);
+            ui->lineEdit_RecAppData->setText(APP_DATA);
+            ui->lineEdit_RecFcs->setText(FCS);
+        }else if(CMD=="69 00"){
+            /** 协调器接收到正确指令后的响应 **/
+
+        }else if(CMD=="69 80"){
+            /** 协调器发送数据到上位机 **/
+
+        }else{
+            ui->lineEdit_RecNa->clear();
+            ui->lineEdit_RecAppCmd->clear();
+            ui->lineEdit_RecAppData->clear();
+            ui->lineEdit_RecFcs->clear();
+        }
+    }else{
+        /** ascii数据格式处理 **/
+    }
 }

@@ -12,6 +12,7 @@
 #include <QMessageBox>
 #include <QToolTip>
 #include <iostream>
+#include <QListWidgetItem>
 
 #define BIT_0                   (1<<0)
 #define BIT_1                   (1<<1)
@@ -143,6 +144,8 @@ private slots:
     void on_lineEdit_SendNa_inputRejected();
 
     void on_count_num_clear_btn_clicked();
+    // 数据解析 组box
+    void on_info_listWidget_itemClicked(QListWidgetItem *item);
 };
 
 #endif // MAINWINDOW_H
