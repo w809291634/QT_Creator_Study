@@ -437,56 +437,13 @@
              </property>
             </widget>
            </item>
-           <item row="5" column="0">
-            <widget class="QLabel" name="label_17">
+           <item row="3" column="0">
+            <widget class="QLabel" name="label_13">
              <property name="text">
-              <string>协议版本</string>
+              <string>NA</string>
              </property>
              <property name="alignment">
               <set>Qt::AlignCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="0">
-            <widget class="QLabel" name="label_10">
-             <property name="text">
-              <string>SOP</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item row="7" column="0">
-            <widget class="QLabel" name="label_15">
-             <property name="text">
-              <string>FCS</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item row="4" column="0">
-            <widget class="QLabel" name="label_14">
-             <property name="text">
-              <string>APP_CMD</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="1">
-            <widget class="QLineEdit" name="lineEdit_RecNa">
-             <property name="styleSheet">
-              <string notr="true">background-color: rgba(222, 222, 222, 222);</string>
-             </property>
-             <property name="readOnly">
-              <bool>true</bool>
-             </property>
-             <property name="placeholderText">
-              <string> 网络地址</string>
              </property>
             </widget>
            </item>
@@ -503,53 +460,7 @@
              </property>
             </widget>
            </item>
-           <item row="3" column="0">
-            <widget class="QLabel" name="label_13">
-             <property name="text">
-              <string>NA</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item row="6" column="0">
-            <widget class="QLabel" name="label_16">
-             <property name="text">
-              <string>APP_DATA</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
-             </property>
-            </widget>
-           </item>
            <item row="6" column="1">
-            <widget class="QLineEdit" name="lineEdit_RecAppData">
-             <property name="styleSheet">
-              <string notr="true">background-color: rgba(222, 222, 222, 222);</string>
-             </property>
-             <property name="readOnly">
-              <bool>true</bool>
-             </property>
-             <property name="placeholderText">
-              <string> 数据</string>
-             </property>
-            </widget>
-           </item>
-           <item row="5" column="1">
-            <widget class="QLineEdit" name="lineEdit_ProtoVer">
-             <property name="styleSheet">
-              <string notr="true">background-color: rgba(222, 222, 222, 222);</string>
-             </property>
-             <property name="readOnly">
-              <bool>true</bool>
-             </property>
-             <property name="placeholderText">
-              <string> 协议版本</string>
-             </property>
-            </widget>
-           </item>
-           <item row="7" column="1">
             <widget class="QLineEdit" name="lineEdit_RecFcs">
              <property name="styleSheet">
               <string notr="true">background-color: rgba(222, 222, 222, 222);</string>
@@ -562,8 +473,28 @@
              </property>
             </widget>
            </item>
-           <item row="2" column="1">
-            <widget class="QLineEdit" name="lineEdit_RecCmd">
+           <item row="6" column="0">
+            <widget class="QLabel" name="label_15">
+             <property name="text">
+              <string>FCS</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_10">
+             <property name="text">
+              <string>SOP</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="1">
+            <widget class="QLineEdit" name="lineEdit_RecAppData">
              <property name="styleSheet">
               <string notr="true">background-color: rgba(222, 222, 222, 222);</string>
              </property>
@@ -571,27 +502,7 @@
               <bool>true</bool>
              </property>
              <property name="placeholderText">
-              <string> 标示码</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="0">
-            <widget class="QLabel" name="label_11">
-             <property name="text">
-              <string>LEN</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="0">
-            <widget class="QLabel" name="label_12">
-             <property name="text">
-              <string>CMD</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
+              <string> 数据</string>
              </property>
             </widget>
            </item>
@@ -608,11 +519,77 @@
              </property>
             </widget>
            </item>
+           <item row="4" column="0">
+            <widget class="QLabel" name="label_14">
+             <property name="text">
+              <string>APP_CMD</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="label_RecLen">
+             <property name="text">
+              <string>LEN</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="0">
+            <widget class="QLabel" name="label_RecAppData">
+             <property name="text">
+              <string>APP_DATA</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QLineEdit" name="lineEdit_RecCmd">
+             <property name="styleSheet">
+              <string notr="true">background-color: rgba(222, 222, 222, 222);</string>
+             </property>
+             <property name="readOnly">
+              <bool>true</bool>
+             </property>
+             <property name="placeholderText">
+              <string> 标示码</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="1">
+            <widget class="QLineEdit" name="lineEdit_RecNa">
+             <property name="styleSheet">
+              <string notr="true">background-color: rgba(222, 222, 222, 222);</string>
+             </property>
+             <property name="readOnly">
+              <bool>true</bool>
+             </property>
+             <property name="placeholderText">
+              <string> 网络地址</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="label_12">
+             <property name="text">
+              <string>CMD</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
           </layout>
          </widget>
         </item>
         <item>
-         <widget class="QGroupBox" name="groupBox_5">
+         <widget class="QGroupBox" name="groupBox_data_imitate">
           <property name="title">
            <string>数据模拟</string>
           </property>
@@ -641,7 +618,7 @@
             </widget>
            </item>
            <item row="1" column="0">
-            <widget class="QLabel" name="label_23">
+            <widget class="QLabel" name="label_SendLen">
              <property name="text">
               <string>LEN</string>
              </property>
@@ -717,7 +694,7 @@
             <widget class="QComboBox" name="comboBox_SendAppCmd"/>
            </item>
            <item row="5" column="0">
-            <widget class="QLabel" name="label_22">
+            <widget class="QLabel" name="label_SendData">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                <horstretch>0</horstretch>
@@ -947,7 +924,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="pushButton_5">
+       <widget class="QPushButton" name="count_num_clear_btn">
         <property name="text">
          <string>计数清零</string>
         </property>

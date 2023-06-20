@@ -174,6 +174,8 @@ void MainWindow::serial_close()
 {
     Serial->close();
     serial_ui_update();
+
+    zigbee_cmd_reset();
 }
 
 // 串口 写
@@ -292,6 +294,8 @@ void MainWindow::StringToHex(QString str,QByteArray &send_data)
 }
 
 /*********************** zigbee 相关功能函数 ***********************/
+/** zigbee ui状态 **/
+// 初始化
 void MainWindow::zigbee_app_init()
 {
     zigbee_cycle_timer = new QTimer(this);
@@ -322,7 +326,163 @@ void MainWindow::zigbee_ui_state_update(){
         ui->pushButton_Write->setEnabled(true);
         ui->send_data_btn->setEnabled(true);
     }
+
+    /** 判断是协调器还是节点 **/
+    if(zigbee_at_flag){
+        /* 节点 */
+        ui->comboBox_Mold->setEnabled(true);
+        ui->comboBox_Set_Rec->setCurrentIndex(1);
+        ui->comboBox_Set_Send->setCurrentIndex(1);
+        zigbee_set_node_label();
+    }
+    else {
+        /* 协调器 */
+        ui->comboBox_Mold->setEnabled(false);
+        ui->comboBox_Set_Rec->setCurrentIndex(0);
+        ui->comboBox_Set_Send->setCurrentIndex(0);
+        zigbee_set_coordinator_label();
+    }
 }
+
+void MainWindow::zigbee_set_node_label()
+{
+    /* 数据解析 */
+    // 其他label进行隐藏
+    QList<QLabel *> label_list =  ui->groupBox_data_analysis->findChildren<QLabel *>();
+    foreach(auto label, label_list)
+    {
+        bool in=false;
+        for(auto name:{"label_RecLen","label_RecAppData"}){
+            if(label->objectName()==name){
+                in=true;
+                break;
+            }
+        }
+        if(!in) label->hide();
+    }
+
+    // 其他编辑器进行隐藏
+    QList<QLineEdit *> lEdit_list =  ui->groupBox_data_analysis->findChildren<QLineEdit *>();
+    foreach(auto lEdit, lEdit_list)
+    {
+        bool in=false;
+        for(auto name:{"lineEdit_RecLen","lineEdit_RecAppData"}){
+            if(lEdit->objectName()==name){
+                in=true;
+                break;
+            }
+        }
+        if(!in) lEdit->hide();
+    }
+
+    ui->label_RecLen->setText("数据长度");
+    ui->label_RecAppData->setText("应用数据");
+
+    /* 数据模拟 */
+    // 其他label进行隐藏
+    QList<QLabel *> label_list2 =  ui->groupBox_data_imitate->findChildren<QLabel *>();
+    foreach(auto label, label_list2)
+    {
+        bool in=false;
+        for(auto name:{"label_SendLen","label_SendData","SendTime_unit_label"}){
+            if(label->objectName()==name){
+                in=true;
+                break;
+            }
+        }
+        if(!in) label->hide();
+    }
+
+    // 其他编辑器进行隐藏
+    QList<QLineEdit *> lEdit_list2 =  ui->groupBox_data_imitate->findChildren<QLineEdit *>();
+    foreach(auto lEdit, lEdit_list2)
+    {
+        bool in=false;
+        for(auto name:{"lineEdit_SendLen","SendData_ledit","SendTime_ledit"}){
+            if(lEdit->objectName()==name){
+                in=true;
+                break;
+            }
+        }
+        if(!in) lEdit->hide();
+    }
+
+    ui->comboBox_SendAppCmd->hide();
+    ui->label_SendLen->setText("数据长度");
+    ui->label_SendData->setText("应用数据");
+}
+
+
+void MainWindow::zigbee_set_coordinator_label()
+{
+    /* 数据解析 */
+    // 其他label进行显示
+    QList<QLabel *> label_list =  ui->groupBox_data_analysis->findChildren<QLabel *>();
+    foreach(auto label, label_list)
+    {
+        bool in=false;
+        for(auto name:{"label_RecLen","label_RecAppData"}){
+            if(label->objectName()==name){
+                in=true;
+                break;
+            }
+        }
+        if(!in) label->show();
+    }
+
+    // 其他编辑器进行显示
+    QList<QLineEdit *> lEdit_list =  ui->groupBox_data_analysis->findChildren<QLineEdit *>();
+    foreach(auto lEdit, lEdit_list)
+    {
+        bool in=false;
+        for(auto name:{"lineEdit_RecLen","lineEdit_RecAppData"}){
+            if(lEdit->objectName()==name){
+                in=true;
+                break;
+            }
+        }
+        if(!in) lEdit->show();
+    }
+
+    ui->label_RecLen->setText("LEN");
+    ui->label_RecAppData->setText("APP_DATA");
+
+    /* 数据模拟 */
+    // 其他label进行显示
+    QList<QLabel *> label_list2 =  ui->groupBox_data_imitate->findChildren<QLabel *>();
+    foreach(auto label, label_list2)
+    {
+        bool in=false;
+        for(auto name:{"label_SendLen","label_SendData","SendTime_unit_label"}){
+            if(label->objectName()==name){
+                in=true;
+                break;
+            }
+        }
+        if(!in) label->show();
+    }
+
+    // 其他编辑器进行显示
+    QList<QLineEdit *> lEdit_list2 =  ui->groupBox_data_imitate->findChildren<QLineEdit *>();
+    foreach(auto lEdit, lEdit_list2)
+    {
+        bool in=false;
+        for(auto name:{"lineEdit_SendLen","SendData_ledit","SendTime_ledit"}){
+            if(lEdit->objectName()==name){
+                in=true;
+                break;
+            }
+        }
+        if(!in) lEdit->show();
+    }
+
+    ui->comboBox_SendAppCmd->show();
+    ui->label_SendLen->setText("LEN");
+    ui->label_SendData->setText("APP_DATA");
+}
+
+
+/** zigbee 读写和数据处理 **/
 
 // zigbee 指令状态复位
 void MainWindow::zigbee_cmd_reset(bool update_ui)
@@ -449,20 +609,17 @@ void MainWindow::zigbee_data_handle(QByteArray& data,QString& display_data)
         recv_show_whole+=QString(display_data);
     else
         recv_show_whole+=" "+QString(display_data);
-//    qDebug()<< "recv_raw_whole:" << recv_raw_whole;
-//    qDebug()<< "recv_data_whole:" << recv_data_whole;
-//    qDebug()<< "recv_show_whole:" << recv_show_whole;
+    qDebug()<< "recv_raw_whole:" << recv_raw_whole;
+    qDebug()<< "recv_data_whole:" << recv_data_whole;
+    qDebug()<< "recv_show_whole:" << recv_show_whole;
 
     /* 长度检查 */
     if(recv_data_whole.length()>RECV_CMD_MAX_LEN)
         zigbee_cmd_reset();
 
-    /** 处理主动上报的显示 **/
-    //协调器端
-
-
     /** 测试 是否 支持AT指令 **/
     if(!(zigbee_flag & BIT_2) && current_cmd.contains("ATE0")){
+        // 正常指令的回复
         if(recv_data_whole.contains("OK\r\n")){
             /* 表示支持AT指令 */
             zigbee_flag |= BIT_2;       // 必须激活标记，否则出现bug
@@ -538,6 +695,7 @@ void MainWindow::zigbee_data_handle(QByteArray& data,QString& display_data)
             ui->comboBox_Mold->setCurrentIndex(type_num);
 
             // 更新信息
+            zigbee_ui_state_update();           // 更新类型UI
             QString info1=QString("[%1 %2]-->%3").
                     arg(m_Time_str).arg(m_rf_type).arg(cmd_flag+type);
             QString info2=QString("[%1 %2]-->%3").
@@ -714,11 +872,13 @@ void MainWindow::zigbee_data_handle(QByteArray& data,QString& display_data)
             QByteArray channel_pair=data_list[2];
             QString panid = panid_pair.replace("PANID=","");
             QString channel = channel_pair.replace("CHANNEL=","");
+
             ui->lineEdit_Panid->setText(panid);
             ui->comboBox_Channel->setCurrentText(channel);
             ui->comboBox_Mold->setCurrentIndex(0);
 
             // 更新信息
+            zigbee_ui_state_update();
             QString info1=QString("[%1 %2]-->%3").
                     arg(m_Time_str).arg(m_rf_type).arg(vaild_recv_data);
             INFO_LISTWIDGET_UPDATE(info1);
@@ -748,11 +908,13 @@ void MainWindow::zigbee_cmd_timeout()
 }
 
 // zigbee 写入配置
+// 写入之前要求先读
 void MainWindow::zigbee_write_config()
 {
     if(Serial->isOpen()){
         zigbee_cmd_reset();
         zigbee_flag |= BIT_1;
+        zigbee_flag |= BIT_2;       // 默认表示不再关心AT测试，连接串口后已经进行测试
         zigbee_ui_state_update();
         ZIGBEE_RES_TIMER_START;
     }
@@ -970,4 +1132,12 @@ void MainWindow::on_lineEdit_SendNa_inputRejected()
         new_text=new_text+" ";
         ui->lineEdit_SendNa->setText(new_text);
     }
+}
+
+// 清除发送计数
+void MainWindow::on_count_num_clear_btn_clicked()
+{
+    m_Rec_Num=0;m_Send_Num=0;
+    ui->label_RecNum->setText(QString::number(m_Rec_Num));
+    ui->label_SendNum->setText(QString::number(m_Send_Num));
 }

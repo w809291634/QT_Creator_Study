@@ -51,7 +51,7 @@ private:
 
     /** 串口管理 **/
     QSharedPointer<QSerialPort> Serial;
-    QString current_cmd="";
+    QString current_cmd="";             // 储存当前的发送命令
     QByteArray recv_raw_whole="";
     QString recv_data_whole="";
     QString recv_show_whole="";
@@ -111,6 +111,8 @@ private slots:
     /** zigbee 相关功能函数 **/
     void zigbee_app_init();
     void zigbee_ui_state_update();
+    void zigbee_set_node_label();
+    void zigbee_set_coordinator_label();
 
     void zigbee_cmd_reset(bool update_ui=true);
     void zigbee_read_config(bool at_test=true);
@@ -137,6 +139,8 @@ private slots:
     // 数据模拟 组box
     void on_lineEdit_SendNa_textEdited(const QString &arg1);
     void on_lineEdit_SendNa_inputRejected();
+
+    void on_count_num_clear_btn_clicked();
 };
 
 #endif // MAINWINDOW_H
