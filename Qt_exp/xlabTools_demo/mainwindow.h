@@ -22,15 +22,17 @@
 #define BIT_6                   (1<<6)
 #define BIT_7                   (1<<7)
 #define ARRAY(x)                (sizeof(x)/sizeof(x[0]))
-#define INFO_LISTWIDGET_UPDATE(info)        {ui->info_listWidget->addItem(info); \
-                                            ui->info_listWidget->scrollToBottom();}
+#define INFO_LISTWIDGET_UPDATE(info)        {if(m_display_recv){ui->info_listWidget->addItem(info); \
+                                            ui->info_listWidget->scrollToBottom();}}
 #define CLEAN_RECV_DATA             {recv_raw_whole.clear();recv_data_whole.clear();recv_show_whole.clear();}
 #define RECV_CMD_MAX_LEN            256
 
 #define ZIGBEE_RES_TIMER_START      {zigbee_res_timer->start(1000);}
+#define ZIGBEE_RES_TIMER_START_2    {zigbee_res_timer->start(2000);}
 #define ZIGBEE_RECV_CMD_OK          {zigbee_Sem.release();}
 #define ZIGBEE_CMD_HAVE_DATA        {zigbee_flag|=BIT_6;}
 #define ZIGBEE_CMD_NO_DATA          {zigbee_flag&=~BIT_6;}
+
 
 /* zigbee */
 // 网络短地址范围 0xFFFF
