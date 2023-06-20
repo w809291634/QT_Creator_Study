@@ -1279,26 +1279,19 @@ void MainWindow::on_info_listWidget_itemClicked(QListWidgetItem *item)
             APP_DATA_HEX=DATA_FRAME.mid(3*4);           // 应用数据
 
             QByteArray APP_DATA_ARR;
-            QString t;
+            APP_DATA_STR.clear();
             StringToHex(APP_DATA_HEX,APP_DATA_ARR);
             for(int i=0;i<APP_DATA_ARR.length();i++){
-//                qDebug()<< APP_DATA_ARR.at(i) ;
-//                qDebug()<<QChar(APP_DATA_ARR.at(i)).isNonCharacter();
-                t+=QString(APP_DATA_ARR.at(i));
-
+                uint8_t _uchar=static_cast<uint8_t>(APP_DATA_ARR.at(i));
+                ushort _u16=_uchar;
+                APP_DATA_STR+=QString(_u16);
             }
-            qDebug()<< "t " << t;
-//            std::cout << std::endl;
-
-//            qDebug()<< APP_DATA_ARR;
-//            qDebug()<< QString(APP_DATA_ARR);
-
             ui->lineEdit_RecNa->setText(NA);
             ui->lineEdit_RecAppCmd->setText(APP_CMD);
-            ui->lineEdit_RecAppData->setText( t);
 
-
-
+            if(ui->comboBox_Set_Rec->currentIndex()==0)
+                ui->lineEdit_RecAppData->setText(APP_DATA_HEX);
+            else ui->lineEdit_RecAppData->setText(APP_DATA_STR);
         }else{
             ui->lineEdit_RecNa->clear();
             ui->lineEdit_RecAppCmd->clear();
@@ -1314,8 +1307,10 @@ void MainWindow::on_comboBox_Set_Rec_currentIndexChanged(int index)
 {
     if(!index){
         // hex显示
+        ui->lineEdit_RecAppData->setText(APP_DATA_HEX);
+
     }else{
         // ascii显示
-
+        ui->lineEdit_RecAppData->setText(APP_DATA_STR);
     }
 }
