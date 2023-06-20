@@ -31,6 +31,7 @@ void MainWindow::init_app_ui()
 
     // 设置图标
     this->setWindowIcon(QIcon(":/icon/xLabTools.ico"));
+    this->setWindowTitle("xLabTools-Bee");
 
     // zigbee 的数据模拟栏
     ui->send_cycle_cBox->setChecked(false);
@@ -118,7 +119,7 @@ void MainWindow::serial_get_availablePorts(void)
                 // 添加 复选框 的项目
                 ui->comboBox_Com->addItem(serialPortInfo.at(i).portName());
             }
-            ui->comboBox_Com->setCurrentText("COM3");
+            ui->comboBox_Com->setCurrentText("COM12");
             ui->comboBox_Baud->setCurrentText("38400");       // 如果有115200的 选项，就选择这个为默认。
             Last_count = static_cast<unsigned char>(count);
         }
@@ -1152,10 +1153,7 @@ void MainWindow::on_pushButton_DelRec_clicked()
     ui->info_listWidget->clear();
     QList<QLineEdit *> QLineEditlist =
             ui->groupBox_data_analysis->findChildren<QLineEdit *>(QString(), Qt::FindDirectChildrenOnly);
-    foreach(auto lineEdit, QLineEditlist)
-    {
-        lineEdit->clear();
-    }
+    foreach(auto lineEdit, QLineEditlist) lineEdit->clear();
 }
 
 // 清除数据模拟 按钮
@@ -1212,15 +1210,19 @@ void MainWindow::on_count_num_clear_btn_clicked()
 void MainWindow::on_info_listWidget_itemClicked(QListWidgetItem *item)
 {
     bool ok=false;
+    QList<QLineEdit *> QLineEditlist =
+            ui->groupBox_data_analysis->findChildren<QLineEdit *>(QString(), Qt::FindDirectChildrenOnly);
+    foreach(auto lineEdit, QLineEditlist) lineEdit->clear();
+
     QString item_str=item->text();
     int index=item_str.indexOf("FE");                    // 获取第一个出现 "FE" 帧头的位置
     if(index!=-1){
         /** hex数据格式处理 **/
         // 仅保留FE开头的回复帧
         QString vaild_cmd=item_str.mid(index);
-        qDebug()<< vaild_cmd;
-
+        // qDebug()<< vaild_cmd;
         int i=0;
+
         QString SOP=vaild_cmd.mid(0,2);                 // 网络地址
         QString LEN=vaild_cmd.mid(3*(++i),2);           // 数据帧长度
         int data_len=LEN.toInt(&ok,16);                 // 数据帧长度（LEN）,去除 SOP、LEN、CMD（2）、FCS
@@ -1228,40 +1230,92 @@ void MainWindow::on_info_listWidget_itemClicked(QListWidgetItem *item)
         QString CMD=vaild_cmd.mid(3*(++i),5);           // 命令帧
         i+=2;
 
+        QString DATA_FRAME=vaild_cmd.mid(3*4,data_len*3-1); // 数据帧
+        QString FCS=vaild_cmd.mid(vaild_cmd.length()-2);    // 校验
+
         ui->lineEdit_RecSop->setText(SOP);
         ui->lineEdit_RecLen->setText(LEN);
         ui->lineEdit_RecCmd->setText(CMD);
+        ui->lineEdit_RecFcs->setText(FCS);
 
         // 29 00 上位机发送数据到协调器
         // 69 00 协调器接收到正确指令后的响应
         // 69 80 协调器发送数据到上位机
         if(CMD=="29 00"){
             /** 上位机发送数据到协调器 **/
+            QString FLAG=vaild_cmd.mid(3*i,2);
+            if(FLAG!="02")return;
             QString NA=vaild_cmd.mid(3*(++i),5);        // 网络地址 上位机发送数据时 多一个 02
             i+=2;
             QString APP_CMD=vaild_cmd.mid(3*i,5);       // 应用命令
-            QString FCS=vaild_cmd.mid(vaild_cmd.length()-2);// 校验
-
-            QString data_frame=vaild_cmd.mid(3*4,data_len*3-1); // 截取数据帧
-            QString APP_DATA=data_frame.mid(3*5);       // 应用数据
+            QString APP_DATA=DATA_FRAME.mid(3*4+3);     // 应用数据
 
             ui->lineEdit_RecNa->setText(NA);
             ui->lineEdit_RecAppCmd->setText(APP_CMD);
             ui->lineEdit_RecAppData->setText(APP_DATA);
-            ui->lineEdit_RecFcs->setText(FCS);
+
+
+            QByteArray APP_DATA_ARR;
+            StringToHex(APP_DATA,APP_DATA_ARR);
+            char* data=APP_DATA_ARR.data();
+            for(int i=0;i<APP_DATA_ARR.length();i++){
+                std::cout<< data[i] ;
+            }
+            std::cout << std::endl;
+
+            qDebug()<< APP_DATA_ARR;
+            qDebug()<< QString(APP_DATA_ARR);
+
         }else if(CMD=="69 00"){
             /** 协调器接收到正确指令后的响应 **/
-
+            // "FE 01 69 00 00 68"
+            ui->lineEdit_RecAppData->setText(DATA_FRAME);
         }else if(CMD=="69 80"){
             /** 协调器发送数据到上位机 **/
+            // "FE 0E 69 80 00 00 01 02 00 00 00 12 4B 00 2A 5C 89 68 2A"
+            QString NA=vaild_cmd.mid(3*i,5);            // 网络地址
+            i+=2;
+            QString APP_CMD=vaild_cmd.mid(3*i,5);       // 应用命令
+            APP_DATA_HEX=DATA_FRAME.mid(3*4);           // 应用数据
+
+            QByteArray APP_DATA_ARR;
+            QString t;
+            StringToHex(APP_DATA_HEX,APP_DATA_ARR);
+            for(int i=0;i<APP_DATA_ARR.length();i++){
+//                qDebug()<< APP_DATA_ARR.at(i) ;
+//                qDebug()<<QChar(APP_DATA_ARR.at(i)).isNonCharacter();
+                t+=QString(APP_DATA_ARR.at(i));
+
+            }
+            qDebug()<< "t " << t;
+//            std::cout << std::endl;
+
+//            qDebug()<< APP_DATA_ARR;
+//            qDebug()<< QString(APP_DATA_ARR);
+
+            ui->lineEdit_RecNa->setText(NA);
+            ui->lineEdit_RecAppCmd->setText(APP_CMD);
+            ui->lineEdit_RecAppData->setText( t);
+
+
 
         }else{
             ui->lineEdit_RecNa->clear();
             ui->lineEdit_RecAppCmd->clear();
             ui->lineEdit_RecAppData->clear();
-            ui->lineEdit_RecFcs->clear();
         }
     }else{
         /** ascii数据格式处理 **/
+    }
+}
+
+// 接收数据格式转换
+void MainWindow::on_comboBox_Set_Rec_currentIndexChanged(int index)
+{
+    if(!index){
+        // hex显示
+    }else{
+        // ascii显示
+
     }
 }

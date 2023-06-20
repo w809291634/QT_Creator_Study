@@ -78,6 +78,8 @@ private:
 
     QTimer* zigbee_cycle_timer;         // 周期定时器
     QTimer* zigbee_res_timer;           // 指令回复超时 定时器.start会复位
+    QString APP_DATA_HEX;               // 数据解析 APP_DATA HEX空格格式
+    QString APP_DATA_STR;               // 字符串
 
     /** 公用部分 **/
     QTime m_time;
@@ -146,6 +148,7 @@ private slots:
     void on_count_num_clear_btn_clicked();
     // 数据解析 组box
     void on_info_listWidget_itemClicked(QListWidgetItem *item);
+    void on_comboBox_Set_Rec_currentIndexChanged(int index);
 };
 
 #endif // MAINWINDOW_H
