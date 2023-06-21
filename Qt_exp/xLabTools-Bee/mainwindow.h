@@ -14,6 +14,7 @@
 #include <iostream>
 #include <QListWidgetItem>
 
+#define qdebug                  qDebug() << __LINE__
 #define BIT_0                   (1<<0)
 #define BIT_1                   (1<<1)
 #define BIT_2                   (1<<2)
@@ -22,10 +23,13 @@
 #define BIT_5                   (1<<5)
 #define BIT_6                   (1<<6)
 #define BIT_7                   (1<<7)
+#define BIT_8                   (1<<8)
+#define BIT_9                   (1<<9)
+
 #define ARRAY(x)                (sizeof(x)/sizeof(x[0]))
 #define INFO_LISTWIDGET_UPDATE(info)        {if(m_display_recv){ui->info_listWidget->addItem(info); \
                                             ui->info_listWidget->scrollToBottom();}}
-#define CLEAN_RECV_DATA             {recv_raw_whole.clear();recv_data_whole.clear();recv_show_whole.clear();}
+#define CLEAN_RECV_DATA             {recv_data_whole.clear();recv_show_whole.clear();}
 #define RECV_CMD_MAX_LEN            256
 
 #define ZIGBEE_RES_TIMER_START      {zigbee_res_timer->start(1000);}
@@ -55,7 +59,6 @@ private:
     /** 串口管理 **/
     QSharedPointer<QSerialPort> Serial;
     QString current_cmd="";             // 储存当前的发送命令
-    QByteArray recv_raw_whole="";
     QString recv_data_whole="";
     QString recv_show_whole="";
 
@@ -74,12 +77,12 @@ private:
     // 位4：保留
     // 位5：保留
     // 位6：指令有无数据帧，读写标志位，1表示读 0表示写
+    // 位7：保留 位8：保留
+    // 位9：读配置完成
     unsigned short zigbee_count = 0;    // 发送指令的计数
 
     QTimer* zigbee_cycle_timer;         // 周期定时器
     QTimer* zigbee_res_timer;           // 指令回复超时 定时器.start会复位
-    QString APP_DATA_HEX;               // 数据解析 APP_DATA HEX空格格式
-    QString APP_DATA_STR;               // 字符串
 
     /** 公用部分 **/
     QTime m_time;
@@ -110,12 +113,16 @@ private slots:
     /** 字符处理功能 **/
     void StringToHex(QString str,QByteArray &send_data);
     char xor_count(QByteArray array,unsigned char s1,unsigned char s2);
+    uint8_t xor_count_u8(QByteArray array,uint8_t s1,uint8_t s2);
     QString Add_Space(int x, QString z);
     int Get_DelSpaceString_Length(QString str);
+    QString HexQString2AsciiString(const QString &HexQString);
+    QString AsciiString2HexQString(const QString &qString);
 
     /** zigbee 相关功能函数 **/
     void zigbee_app_init();
     void zigbee_ui_state_update();
+    void zigbee_calculate_fcs();
     void zigbee_set_node_label();
     void zigbee_set_coordinator_label();
 
@@ -136,6 +143,9 @@ private slots:
     void on_pushButton_Read_clicked();
     void on_pushButton_Write_clicked();
     // 数据显示设置 组box
+    void on_info_listWidget_itemClicked(QListWidgetItem *item);
+    void on_comboBox_Set_Rec_currentIndexChanged(int index);
+    void on_comboBox_Set_Send_currentIndexChanged(int index);
 
     // 数据清除 组box
     void on_pushButton_DelRec_clicked();
@@ -145,10 +155,11 @@ private slots:
     void on_lineEdit_SendNa_textEdited(const QString &arg1);
     void on_lineEdit_SendNa_inputRejected();
 
+    void on_send_data_btn_clicked();
+    void on_SendData_ledit_textEdited(const QString &arg1);
+    void on_SendData_ledit_inputRejected();
+    // 其他
     void on_count_num_clear_btn_clicked();
-    // 数据解析 组box
-    void on_info_listWidget_itemClicked(QListWidgetItem *item);
-    void on_comboBox_Set_Rec_currentIndexChanged(int index);
 };
 
 #endif // MAINWINDOW_H
