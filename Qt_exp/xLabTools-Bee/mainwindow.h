@@ -83,6 +83,11 @@ private:
 
     QTimer* zigbee_cycle_timer;         // 周期定时器
     QTimer* zigbee_res_timer;           // 指令回复超时 定时器.start会复位
+    QList<QString> zigbee_na_list;
+    QList<QString> zigbee_send_list;
+
+//    QLineEdit* lineEditFocus =
+//            qobject_cast<QLineEdit*>(ui->widget->focusWidget());
 
     /** 公用部分 **/
     QTime m_time;
@@ -122,7 +127,7 @@ private slots:
     /** zigbee 相关功能函数 **/
     void zigbee_app_init();
     void zigbee_ui_state_update();
-    void zigbee_calculate_fcs();
+    void zigbee_calculate_send_data();
     void zigbee_set_node_label();
     void zigbee_set_coordinator_label();
 

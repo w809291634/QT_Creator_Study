@@ -119,7 +119,7 @@ void MainWindow::serial_get_availablePorts(void)
                 // 添加 复选框 的项目
                 ui->comboBox_Com->addItem(serialPortInfo.at(i).portName());
             }
-            ui->comboBox_Com->setCurrentText("COM8");
+            ui->comboBox_Com->setCurrentText("COM11");
             ui->comboBox_Baud->setCurrentText("38400");       // 如果有115200的 选项，就选择这个为默认。
             Last_count = static_cast<unsigned char>(count);
         }
@@ -966,7 +966,8 @@ void MainWindow::zigbee_data_handle(QByteArray& data,QString& display_data)
                     /* 协调器与上位机之间数据的通信命令 */
                     else if(APP_CMD=="00 00"){
                         QString vaild_ascii_cmd=HexQString2AsciiString(vaild_cmd);
-                        // qdebug << vaild_ascii_cmd;
+                         // qdebug << vaild_ascii_cmd;
+                         // qdebug << vaild_cmd;
                         /* 返回 TYPE PANID CHANNEL */
                         if(vaild_ascii_cmd.contains("{TYPE=") &&
                                 vaild_ascii_cmd.contains("}") &&
@@ -1420,43 +1421,65 @@ void MainWindow::on_pushButton_DelSend_clicked()
 
 /** 数据模拟 组box **/
 // 计算长度和校验
-void MainWindow::zigbee_calculate_fcs()
+void MainWindow::zigbee_calculate_send_data()
 {
-    /** 计算长度和校验 **/
-    QString app_data;   //hex
-    QString app_len;    //hex
-    QString fcs;
+    QString LEN;    //hex
+    QString CMD= ui->lineEdit_SendCmd->text();
+    QString NA = "00 00";
+    QString APP_CMD=ui->comboBox_SendAppCmd->currentText();
+    QString APP_DATA ="00";   //hex
+    QString FCS;
 
+    // APP_DATA
     if(ui->comboBox_Set_Send->currentIndex()==1){
         QString ascii_data=ui->SendData_ledit->displayText();
-        app_data=AsciiString2HexQString(ascii_data);
-    }else app_data=ui->SendData_ledit->displayText();
-    // 去掉首尾空格
-    if(app_data.indexOf(" ")==0) app_data=app_data.mid(1);
-    if(app_data.lastIndexOf(" ")==app_data.length()-1) app_data=app_data.mid(0,app_data.length()-1);
+        APP_DATA=AsciiString2HexQString(ascii_data);
+    }else {
+        // 补足 APP_DATA , 不足使用0代替
+        QString app_data=ui->SendData_ledit->displayText();
+        int num;                    //hex 个数
+        int space_num=app_data.count(' ');
+        switch (app_data.length()) {
+            case 0: num=0;break;
+            case 1: num=1;break;
+            case 2: num=1;break;
+            default:{
+                int last_index=app_data.lastIndexOf(' ');
+                if(last_index!=-1 && app_data.lastIndexOf(' ')!=app_data.length()-1)
+                    num=space_num+1;
+                else num=space_num;
+            }break;
+        }
+        // 根据 行编辑器中 hex个数进行补足
+        for(int i=1;i<num;i++){
+           APP_DATA+=" 00";
+        }
+        APP_DATA.replace(0,app_data.length(),app_data);
+    }
 
     // 计算长度
-    int int_len=Get_DelSpaceString_Length(app_data)%256;
+    uint8_t int_len=static_cast<uint8_t>(Get_DelSpaceString_Length(APP_DATA)+5);
     char len[3]={0};
     sprintf(len,"%02X",int_len);
-    app_len=QString(len);
-    ui->lineEdit_SendLen->setText(app_len);
+    LEN=QString(len);
+    ui->lineEdit_SendLen->setText(LEN);
 
-    // 计算校验
-    QString cmd= ui->lineEdit_SendCmd->text();
+    // 网络地址
     QString na = ui->lineEdit_SendNa->text();
-    QString app_cmd =  ui->comboBox_SendAppCmd->currentText();
-    if(na.length()>=5){
-        QString xor_frame=app_len+cmd+na+app_cmd+app_data;
-        xor_frame.remove(' ');
-        xor_frame=Add_Space(0,xor_frame);
-        qdebug<< xor_frame;
-        uint8_t _xor= xor_count_u8(xor_frame.toLatin1(),0,static_cast<uint8_t>(xor_frame.length()-1));
-        char temp[3]={0};
-        sprintf(temp,"%02X",_xor);
-        fcs=QString(temp);
-        ui->lineEdit_SendFcs->setText(fcs);
-    }
+    NA.replace(0,na.length(),na);
+
+    // FCS
+    QString xor_frame=LEN+CMD+NA+APP_CMD+APP_DATA;
+    xor_frame.remove(' ');
+    xor_frame=Add_Space(0,xor_frame);
+    QByteArray xor_frame_arr;
+    StringToHex(xor_frame,xor_frame_arr);
+    uint8_t _xor= xor_count_u8(xor_frame_arr,0,static_cast<uint8_t>(xor_frame.length()-1));
+    char temp[3]={0};
+    sprintf(temp,"%02X",_xor);
+    FCS=QString(temp);
+
+    ui->lineEdit_SendFcs->setText(FCS);
 }
 
 // 网络地址 行编辑器 自动添加空格
@@ -1477,7 +1500,7 @@ void MainWindow::on_lineEdit_SendNa_textEdited(const QString &arg1)
     }
 
     /** 计算长度和校验 **/
-    zigbee_calculate_fcs();
+    zigbee_calculate_send_data();
 }
 
 // 网络地址 行编辑器 输入错误提示
@@ -1523,7 +1546,7 @@ void MainWindow::on_SendData_ledit_textEdited(const QString &arg1)
     }else{
     }
     /** 计算长度和校验 **/
-    zigbee_calculate_fcs();
+    zigbee_calculate_send_data();
 }
 
 // 发送数据 行编辑器 拒绝输入
@@ -1560,15 +1583,17 @@ void MainWindow::on_send_data_btn_clicked()
     QString na = ui->lineEdit_SendNa->text();
     QString app_cmd =  ui->comboBox_SendAppCmd->currentText();
     QString app_data;
+    QString fcs=ui->lineEdit_SendFcs->text();
+
     if(ui->comboBox_Set_Send->currentIndex()==1){
         QString ascii_data=ui->SendData_ledit->displayText();
         app_data=AsciiString2HexQString(ascii_data);
     }else app_data=ui->SendData_ledit->displayText();
-    QString fcs=ui->lineEdit_SendFcs->text();
+
     QString send_cmd=sop+app_len+cmd+na+app_cmd+app_data+fcs;
     send_cmd.remove(' ');
     send_cmd=Add_Space(0,send_cmd);
-    qdebug<<send_cmd;
+
     QByteArray send_cmd_arr;
     StringToHex(send_cmd,send_cmd_arr);
     serial_write(send_cmd_arr,send_cmd);
