@@ -27,9 +27,16 @@
 #define BIT_8                   (1<<8)
 #define BIT_9                   (1<<9)
 
+#define INFO_LISTWIDGET_MAX_HISTORY_NUM  100
 #define ARRAY(x)                (sizeof(x)/sizeof(x[0]))
-#define INFO_LISTWIDGET_UPDATE(info)        {if(m_display_recv){ui->info_listWidget->addItem(info); \
-                                            ui->info_listWidget->scrollToBottom();}}
+#define INFO_LISTWIDGET_UPDATE(info)        do{ \
+                                                if(m_display_recv){ \
+                                                    ui->info_listWidget->addItem(info); \
+                                                    if(ui->info_listWidget->count()>INFO_LISTWIDGET_MAX_HISTORY_NUM) \
+                                                        ui->info_listWidget->takeItem(0); \
+                                                    ui->info_listWidget->scrollToBottom(); \
+                                                } \
+                                            }while(0);
 #define CLEAN_RECV_DATA             {recv_data_whole.clear();recv_show_whole.clear();}
 #define RECV_CMD_MAX_LEN            256
 #define MAX_STORAGE_NUM             10
@@ -39,6 +46,7 @@
 #define ZIGBEE_RECV_CMD_OK          {zigbee_Sem.release();}
 #define ZIGBEE_CMD_HAVE_DATA        {zigbee_flag|=BIT_6;}
 #define ZIGBEE_CMD_NO_DATA          {zigbee_flag&=~BIT_6;}
+#define ZIGBEE_MIN_SEND_CYCLE       200
 
 namespace Ui {
 class MainWindow;
@@ -79,6 +87,8 @@ private:
     // 位7：保留 位8：保留
     // 位9：读配置完成
     unsigned short zigbee_count = 0;    // 发送指令的计数
+
+    QString send_data;                  // AT+SEND 发送的ascii数据
 
     QTimer* zigbee_cycle_timer;         // 周期定时器
     QTimer* zigbee_res_timer;           // 指令回复超时 定时器.start会复位

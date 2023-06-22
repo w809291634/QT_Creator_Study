@@ -161,7 +161,7 @@ void MainWindow::serial_get_availablePorts(void)
                 // 添加 复选框 的项目
                 ui->comboBox_Com->addItem(serialPortInfo.at(i).portName());
             }
-            ui->comboBox_Com->setCurrentText("COM11");
+            ui->comboBox_Com->setCurrentText("COM13");
             ui->comboBox_Baud->setCurrentText("38400");       // 如果有115200的 选项，就选择这个为默认。
             Last_count = static_cast<unsigned char>(count);
         }
@@ -239,6 +239,8 @@ void MainWindow::serial_write(QByteArray &data,QString display_string,QString no
             display_string.remove("\r");display_string.remove("\n");
             QString info=QString("[%1 %2]<--%3").arg(m_Time_str).arg(m_rf_type).arg(display_string);
             ui->info_listWidget->addItem(info+notes);
+            if(ui->info_listWidget->count()>INFO_LISTWIDGET_MAX_HISTORY_NUM)
+                ui->info_listWidget->takeItem(0);
             ui->info_listWidget->scrollToBottom();
         }
     }
@@ -411,12 +413,11 @@ void MainWindow::zigbee_app_init()
     QStringList AppCmdlist;
     AppCmdlist<< "00 00" << "01 01" << "01 02" << "00 02" ;
     ui->comboBox_SendAppCmd->addItems(AppCmdlist);
-    zigbee_send_list_add("{CD1=255}");
-    zigbee_send_list_add("{OD1=255}");
 
     // 工具提示
     ui->lineEdit_SendNa->setToolTip("1.固定hex格式,两个数组中间空格\r\n2.使用方向键‘up’或者‘down’获取历史\r\n3.数据正确回车保存");
     ui->SendData_ledit->setToolTip("1.输入hex格式时,两个数组中间空格\r\n2.使用方向键‘up’或者‘down’获取历史\r\n3.数据正确发送保存");
+    ui->SendTime_ledit->setToolTip("最小周期200ms");
 
     // 进行一次复位
     zigbee_cmd_reset();
@@ -464,6 +465,8 @@ void MainWindow::zigbee_ui_state_update()
 
                 zigbee_set_coordinator_label();
             }
+            zigbee_send_list_add("{CD1=255}");
+            zigbee_send_list_add("{OD1=255}");
         }
     }
     /** 串口关闭时 **/
@@ -842,7 +845,7 @@ void MainWindow::zigbee_data_handle(QByteArray& data,QString& display_data)
         // 正常指令的回复
         if(recv_data_whole.contains("OK\r\n")){
             /* 表示支持AT指令 */
-            zigbee_flag |= BIT_2;       // 必须激活标记，否则出现bug
+            zigbee_flag |= BIT_2;       // 必须激活标记
             zigbee_flag |= BIT_3;
             zigbee_at_flag=true;
 
@@ -885,17 +888,28 @@ void MainWindow::zigbee_data_handle(QByteArray& data,QString& display_data)
         const QList<QString> cmd_res_with_ok
                 = {"AT+MAC?\r\n","AT+LOGICALTYPE?\r\n","AT+CHANNEL?\r\n","AT+PANID?\r\n"};
 
-        while(recv_data_whole.contains("\r\n"))
+        while(recv_data_whole.contains("\r\n") || recv_data_whole.contains(">"))
         {
             count++;if(count>5)
             {
                 qdebug<< "zigbee AT命令 多次循环";
                 return;                                  // 防止错误，并不会执行
             }
+            /** 处理发送 **/
+            if(recv_data_whole.contains(">")){
+                QByteArray send_cmd_arr;
+                send_cmd_arr = send_data.toLatin1();
+                serial_write(send_cmd_arr,send_data);
 
+                send_data.clear();
+                recv_data_whole.remove(">");            // 不关注有没有接收正常
+            }
+
+            /** 处理接收 **/
             int index=recv_data_whole.indexOf("\r\n");
+            if(index==-1)return;
             QString vaild_cmd=recv_data_whole.mid(0,index);     // 去掉回车，取指令
-//            qdebug << "vaild_cmd" << vaild_cmd;
+            // qdebug << "vaild_cmd" << vaild_cmd;
 
             if(vaild_cmd.contains("OK")){
                 // 更新信息
@@ -990,6 +1004,36 @@ void MainWindow::zigbee_data_handle(QByteArray& data,QString& display_data)
             // ERR:Bad command
             else if(vaild_cmd.contains("ERR: Bad command")){
                 qdebug << "ERR: Bad command";
+                QString info1=QString("[%1 %2]-->%3").
+                        arg(m_Time_str).arg(m_rf_type).arg(vaild_cmd);
+                INFO_LISTWIDGET_UPDATE(info1);
+                ZIGBEE_ATCMD_PROCESSED;
+            }
+            else if(vaild_cmd.contains("+RECV:")){
+                QString cmd_flag="+RECV:";
+                int index=vaild_cmd.indexOf(cmd_flag);
+                int len = vaild_cmd.mid(index+cmd_flag.length()).toInt();    // 数据长度
+
+                index = recv_data_whole.indexOf(vaild_cmd);
+                QString data_frame=recv_data_whole.mid(index+vaild_cmd.length()+2); // 加上回车,去掉+RECV:9\r\n 后的其他
+                if(len > data_frame.length()) return;                       // 数据没有接收完整，下次进行
+
+                QString data=data_frame.mid(0,len);
+                if(data.at(0)!="{" || data.right(1)!="}"){
+                    qdebug << "接收数据错误";
+                    qdebug << "recv_data_whole:" << recv_data_whole;
+                    qdebug << "data_frame:" << data_frame;
+                    qdebug << "data:" << data;
+                }
+                QString info1=QString("[%1 %2]-->%3").
+                        arg(m_Time_str).arg(m_rf_type).arg(data);
+                INFO_LISTWIDGET_UPDATE(info1);
+                recv_data_whole=recv_data_whole.remove(data);               // 处理过数据，删除
+                ZIGBEE_ATCMD_PROCESSED;
+            }
+            // "+SEND:<len>" 发送数据的回复
+            else if(vaild_cmd.contains("+SEND:"))
+            {
                 QString info1=QString("[%1 %2]-->%3").
                         arg(m_Time_str).arg(m_rf_type).arg(vaild_cmd);
                 INFO_LISTWIDGET_UPDATE(info1);
@@ -1487,8 +1531,18 @@ void MainWindow::on_info_listWidget_itemClicked(QListWidgetItem *item)
 #endif
     }else{
         /** ascii数据格式处理 **/
+        QString APP_DATA_HEX;
+        QString APP_DATA_ACSII;
 
-
+        int index=item_str.indexOf("{");
+        if(index==-1)return;
+        QString vaild_data=item_str.mid(index);
+        if(vaild_data[0]=="{" && vaild_data.right(1)=="}"){
+            int data_len=vaild_data.length();
+            ui->lineEdit_RecLen->setText(QString::number(data_len));
+            APP_DATA_HEX=AsciiString2HexQString(vaild_data);
+            REC_APP_DATA_DISPLAY;
+        }
     }
 }
 
@@ -1604,7 +1658,11 @@ void MainWindow::zigbee_calculate_send_data()
     char len[3]={0};
     sprintf(len,"%02X",int_len);
     LEN=QString(len);
-    ui->lineEdit_SendLen->setText(LEN);
+    if(zigbee_at_flag){
+        ui->lineEdit_SendLen->setText(QString::number(int_len-5)); //ascii
+    }
+    else
+        ui->lineEdit_SendLen->setText(LEN);
 
     // 网络地址
     QString na = ui->lineEdit_SendNa->text();
@@ -1730,39 +1788,54 @@ void MainWindow::on_SendData_ledit_inputRejected()
 // 发送数据
 void MainWindow::on_send_data_btn_clicked()
 {
-    QString sop="FE";
-    QString len= ui->lineEdit_SendLen->text();
-    QString cmd= ui->lineEdit_SendCmd->text();
-    QString na = ui->lineEdit_SendNa->text();
-    QString app_cmd =  ui->comboBox_SendAppCmd->currentText();
-    QString app_data;
-    QString fcs=ui->lineEdit_SendFcs->text();
+    if(zigbee_at_flag){
+        /* at指令 */
+        QString send_cmd = "AT+SEND=";
+        if(ui->comboBox_Set_Send->currentIndex()==0){
+            QString hex_data=ui->SendData_ledit->displayText();
+            send_data=HexQString2AsciiString(hex_data);
+        }else send_data=ui->SendData_ledit->displayText();
+        send_cmd += ui->lineEdit_SendLen->text()+"\r\n";
 
-    if(ui->comboBox_Set_Send->currentIndex()==1){
-        QString ascii_data=ui->SendData_ledit->displayText();
-        app_data=AsciiString2HexQString(ascii_data);
-    }else app_data=ui->SendData_ledit->displayText();
-    QString ascii_text;
-    ascii_text = HexQString2AsciiString(app_data);
-    zigbee_send_list_add(ascii_text);
+        QByteArray send_cmd_arr;
+        send_cmd_arr = send_cmd.toLatin1();
+        serial_write(send_cmd_arr,send_cmd);
+    }else{
+        /* hex指令 */
+        QString sop="FE";
+        QString len= ui->lineEdit_SendLen->text();
+        QString cmd= ui->lineEdit_SendCmd->text();
+        QString na = ui->lineEdit_SendNa->text();
+        QString app_cmd =  ui->comboBox_SendAppCmd->currentText();
+        QString app_data;
+        QString fcs=ui->lineEdit_SendFcs->text();
 
-    QString send_cmd=sop+len+cmd+na+app_cmd+app_data+fcs;
-    send_cmd.remove(' ');
-    send_cmd=Add_Space(0,send_cmd);
+        if(ui->comboBox_Set_Send->currentIndex()==1){
+            QString ascii_data=ui->SendData_ledit->displayText();
+            app_data=AsciiString2HexQString(ascii_data);
+        }else app_data=ui->SendData_ledit->displayText();
+        QString ascii_text;
+        ascii_text = HexQString2AsciiString(app_data);
+        zigbee_send_list_add(ascii_text);
 
-    QByteArray send_cmd_arr;
-    StringToHex(send_cmd,send_cmd_arr);
-    serial_write(send_cmd_arr,send_cmd);
+        QString send_cmd=sop+len+cmd+na+app_cmd+app_data+fcs;
+        send_cmd.remove(' ');
+        send_cmd=Add_Space(0,send_cmd);
+
+        QByteArray send_cmd_arr;
+        StringToHex(send_cmd,send_cmd_arr);
+        serial_write(send_cmd_arr,send_cmd);
+    }
 }
 
 // 设置自动发送
 void MainWindow::on_send_cycle_cBox_clicked(bool checked)
 {
     bool ok;
-    int hex = ui->SendTime_ledit->displayText().toInt(&ok,10);
-    if(hex<100)hex=100;
+    int cycle = ui->SendTime_ledit->displayText().toInt(&ok,10);
+    if(cycle<ZIGBEE_MIN_SEND_CYCLE)cycle=ZIGBEE_MIN_SEND_CYCLE;
     if(checked){
-        zigbee_send_timer->start(hex);
+        zigbee_send_timer->start(cycle);
         ui->SendTime_ledit->show();
         ui->SendTime_unit_label->show();
     }
@@ -1777,9 +1850,9 @@ void MainWindow::on_send_cycle_cBox_clicked(bool checked)
 void MainWindow::on_SendTime_ledit_textChanged(const QString &arg1)
 {
     bool ok;
-    int hex = arg1.toInt(&ok,10);
-    if(hex<100)hex=100;
-    zigbee_send_timer->setInterval(hex);
+    int cycle = arg1.toInt(&ok,10);
+    if(cycle<ZIGBEE_MIN_SEND_CYCLE)cycle=ZIGBEE_MIN_SEND_CYCLE;
+    zigbee_send_timer->setInterval(cycle);
 }
 
 /** 其他 **/
