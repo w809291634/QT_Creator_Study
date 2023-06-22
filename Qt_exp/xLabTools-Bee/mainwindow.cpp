@@ -102,6 +102,48 @@ void MainWindow::get_time()
     m_Time_str = m_time.toString("hh:mm:ss");
 }
 
+// 按键事件处理
+void MainWindow::keyPressEvent(QKeyEvent *event)
+{
+    QWidget *focusWidget = QApplication::focusWidget();
+    if(focusWidget->inherits("QLineEdit")){
+        if(focusWidget->objectName().isEmpty())return;
+        // 网络框获取历史
+        if(qobject_cast<QLineEdit *>(focusWidget)==ui->lineEdit_SendNa){
+            if(event->key() == Qt::Key_Up){
+                QString text = zigbee_na_list_get(0);
+                if(!text.isEmpty())
+                    ui->lineEdit_SendNa->setText(text);
+            }
+            if(event->key() == Qt::Key_Down){
+                QString text = zigbee_na_list_get(1);
+                if(!text.isEmpty())
+                    ui->lineEdit_SendNa->setText(text);
+            }
+        }
+        // 发送框获取历史
+        else if(qobject_cast<QLineEdit *>(focusWidget)==ui->SendData_ledit){
+            if(event->key() == Qt::Key_Up){
+                QString text = zigbee_send_list_get(0);
+                if(!text.isEmpty()){
+                    if(ui->comboBox_Set_Send->currentIndex()==0)
+                        text=AsciiString2HexQString(text);
+                    ui->SendData_ledit->setText(text);
+                }
+            }
+            if(event->key() == Qt::Key_Down){
+                QString text = zigbee_send_list_get(1);
+                if(!text.isEmpty()){
+                    if(ui->comboBox_Set_Send->currentIndex()==0)
+                        text=AsciiString2HexQString(text);
+                    ui->SendData_ledit->setText(text);
+                }
+            }
+        }
+        zigbee_calculate_send_data();
+    }
+}
+
 /** 串口管理接口函数 **/
 // 获取当前电脑可用串口 并进行 状态判断
 void MainWindow::serial_get_availablePorts(void)
@@ -358,12 +400,23 @@ void MainWindow::zigbee_app_init()
     zigbee_res_timer->setSingleShot(true);
     connect(zigbee_res_timer,SIGNAL(timeout()),
             this,SLOT(zigbee_cmd_timeout()));
+
+    zigbee_send_timer = new QTimer(this);
+    connect(zigbee_send_timer,SIGNAL(timeout()),
+            this,SLOT(on_send_data_btn_clicked()));
+
     // 数据发送的ui初始化
     ui->lineEdit_SendSop->setText("FE");
     ui->lineEdit_SendCmd->setText("29 00 02");
     QStringList AppCmdlist;
     AppCmdlist<< "00 00" << "01 01" << "01 02" << "00 02" ;
     ui->comboBox_SendAppCmd->addItems(AppCmdlist);
+    zigbee_send_list_add("{CD1=255}");
+    zigbee_send_list_add("{OD1=255}");
+
+    // 工具提示
+    ui->lineEdit_SendNa->setToolTip("1.固定hex格式,两个数组中间空格\r\n2.使用方向键‘up’或者‘down’获取历史\r\n3.数据正确回车保存");
+    ui->SendData_ledit->setToolTip("1.输入hex格式时,两个数组中间空格\r\n2.使用方向键‘up’或者‘down’获取历史\r\n3.数据正确发送保存");
 
     // 进行一次复位
     zigbee_cmd_reset();
@@ -380,6 +433,7 @@ void MainWindow::zigbee_ui_state_update()
             ui->pushButton_Read->setEnabled(false);
             ui->pushButton_Write->setEnabled(false);
             ui->send_data_btn->setEnabled(false);
+            ui->send_cycle_cBox->setEnabled(false);
 
             // 配置选择
             ui->comboBox_Mold->setEnabled(false);
@@ -389,6 +443,7 @@ void MainWindow::zigbee_ui_state_update()
             ui->pushButton_Read->setEnabled(true);
             ui->pushButton_Write->setEnabled(true);
             ui->send_data_btn->setEnabled(true);
+            ui->send_cycle_cBox->setEnabled(true);
         }
 
         /** 读结束完毕 进行节点和协调器类型 ui 更新 **/
@@ -421,6 +476,9 @@ void MainWindow::zigbee_ui_state_update()
         ui->pushButton_Read->setEnabled(false);
         ui->pushButton_Write->setEnabled(false);
         ui->send_data_btn->setEnabled(false);
+        ui->send_cycle_cBox->setChecked(false);
+        on_send_cycle_cBox_clicked(false);
+        ui->send_cycle_cBox->setEnabled(false);
 
         // zigbee 信息清除
         ui->lineEdit_Add->clear();
@@ -566,6 +624,88 @@ void MainWindow::zigbee_set_coordinator_label()
     ui->comboBox_SendAppCmd->show();
     ui->label_SendLen->setText("LEN");
     ui->label_SendData->setText("APP_DATA");
+}
+
+// 从网络地址列表中获取项目
+QString MainWindow::zigbee_na_list_get(const int& flag)
+{
+    if(zigbee_na_list.empty())return "";
+    switch (flag) {
+        case 0:{
+            // 向上取
+            if(--zigbee_na_index<0)zigbee_na_index=0;
+            return zigbee_na_list[zigbee_na_index];
+        }
+        case 1:{
+            // 向下取
+            if(++zigbee_na_index>=zigbee_na_list.length())zigbee_na_index=zigbee_na_list.length()-1;
+            return zigbee_na_list[zigbee_na_index];
+        }
+        default: return "";
+    }
+}
+
+// 在网络地址列表中添加项目
+// item 为HexQString
+void MainWindow::zigbee_na_list_add(const QString& item){
+    if(item.length()!=5)return;
+    if(!zigbee_na_list.contains(item)){
+        zigbee_na_list.append(item);
+        if(zigbee_na_list.length()>MAX_STORAGE_NUM)
+            zigbee_na_list.removeAt(0);
+
+        zigbee_na_index=zigbee_na_list.length()-1;
+        ui->lineEdit_SendNa->setText(zigbee_na_list[zigbee_na_index]);
+        zigbee_calculate_send_data();
+    }
+}
+
+// 复位索引
+void MainWindow::zigbee_na_list_index_reset(void){
+    zigbee_na_index=zigbee_na_list.length()-1;
+}
+
+// 从发送数据列表中获取项目
+QString MainWindow::zigbee_send_list_get(const int& flag)
+{
+    if(zigbee_send_list.empty())return "";
+    switch (flag) {
+        case 0:{
+            // 向上取
+            if(--zigbee_send_index<0)zigbee_send_index=0;
+            return zigbee_send_list[zigbee_send_index];
+        }
+        case 1:{
+            // 向下取
+            if(++zigbee_send_index>=zigbee_send_list.length())zigbee_send_index=zigbee_send_list.length()-1;
+            return zigbee_send_list[zigbee_send_index];
+        }
+        default: return "";
+    }
+}
+
+// 在发送数据列表中添加项目
+// item 为AsciiString
+void MainWindow::zigbee_send_list_add(const QString& item){
+    if(item.isEmpty())return;
+    if(!zigbee_send_list.contains(item)){
+        zigbee_send_list.append(item);
+        // 超出删除 队首
+        if(zigbee_send_list.length()>MAX_STORAGE_NUM)
+            zigbee_send_list.removeAt(0);
+        zigbee_send_index=zigbee_send_list.length()-1;
+
+        QString text=zigbee_send_list[zigbee_send_index];
+        if(ui->comboBox_Set_Send->currentIndex()==0)
+            text=AsciiString2HexQString(text);
+        ui->SendData_ledit->setText(text);
+        zigbee_calculate_send_data();
+    }
+}
+
+// 复位索引
+void MainWindow::zigbee_send_list_index_reset(void){
+    zigbee_send_index=zigbee_send_list.length()-1;
 }
 
 /** zigbee 读写和数据处理 **/
@@ -947,6 +1087,7 @@ void MainWindow::zigbee_data_handle(QByteArray& data,QString& display_data)
                 else if( CMD=="69 80" ){
                     QString NA=vaild_cmd.mid(12,5);         // 网络地址
                     QString APP_CMD=vaild_cmd.mid(18,5);    // 数据命令
+                    zigbee_na_list_add(NA);
                     /* 协调器根据给定的网络地址，查询 MAC 地址 */
                     if(APP_CMD=="01 02"){
                         // 类似格式："FE 0E 69 80 00 00 01 02 00 00 00 12 4B 00 1B D8 8D E6 15"
@@ -1416,7 +1557,8 @@ void MainWindow::on_pushButton_DelRec_clicked()
 // 清除数据模拟 按钮
 void MainWindow::on_pushButton_DelSend_clicked()
 {
-
+    ui->SendData_ledit->clear();
+    zigbee_send_list_index_reset();
 }
 
 /** 数据模拟 组box **/
@@ -1501,6 +1643,7 @@ void MainWindow::on_lineEdit_SendNa_textEdited(const QString &arg1)
 
     /** 计算长度和校验 **/
     zigbee_calculate_send_data();
+    zigbee_na_list_index_reset();
 }
 
 // 网络地址 行编辑器 输入错误提示
@@ -1511,13 +1654,22 @@ void MainWindow::on_lineEdit_SendNa_inputRejected()
     int cursorPos=ui->lineEdit_SendNa->cursorPosition();    // 获取光标位置
     int h=ui->lineEdit_SendNa->height()/2;
     QPoint point=ui->lineEdit_SendNa->mapToGlobal(QPoint(cursorPos*10,h));  // 相对位置转换为全局位置
-    QToolTip::showText(point,"固定hex格式,两个数组中间空格",this);
+    QToolTip::showText(point,"1.固定hex格式,两个数组中间空格\r\n2.使用方向键‘up’或者‘down’获取历史\r\n3.数据正确回车保存",this);
 
     // 添加几种情况正确补全
     if(ui->lineEdit_SendNa->displayText().length()==2){
         QString new_text=ui->lineEdit_SendNa->displayText();
         new_text=new_text+" ";
         ui->lineEdit_SendNa->setText(new_text);
+    }
+}
+
+// 回车储存 na信息
+void MainWindow::on_lineEdit_SendNa_returnPressed()
+{
+    QString text=ui->lineEdit_SendNa->displayText();
+    if(text.length()==5){
+        zigbee_na_list_add(text);
     }
 }
 
@@ -1547,6 +1699,7 @@ void MainWindow::on_SendData_ledit_textEdited(const QString &arg1)
     }
     /** 计算长度和校验 **/
     zigbee_calculate_send_data();
+    zigbee_send_list_index_reset();
 }
 
 // 发送数据 行编辑器 拒绝输入
@@ -1556,7 +1709,7 @@ void MainWindow::on_SendData_ledit_inputRejected()
         /* hex格式 */
         int h=ui->SendData_ledit->height()/2;
         QPoint point=ui->SendData_ledit->mapToGlobal(QPoint(100,h));  // 相对位置转换为全局位置
-        QToolTip::showText(point,"hex格式,两个数组中间空格",this);
+        QToolTip::showText(point,"1.hex格式,两个数组中间空格\r\n2.使用方向键‘up’或者‘down’获取历史\r\n3.数据正确发送保存",this);
 
         // 添加补空格的情况
         QString displayText=ui->SendData_ledit->displayText();
@@ -1578,7 +1731,7 @@ void MainWindow::on_SendData_ledit_inputRejected()
 void MainWindow::on_send_data_btn_clicked()
 {
     QString sop="FE";
-    QString app_len= ui->lineEdit_SendLen->text();
+    QString len= ui->lineEdit_SendLen->text();
     QString cmd= ui->lineEdit_SendCmd->text();
     QString na = ui->lineEdit_SendNa->text();
     QString app_cmd =  ui->comboBox_SendAppCmd->currentText();
@@ -1589,14 +1742,44 @@ void MainWindow::on_send_data_btn_clicked()
         QString ascii_data=ui->SendData_ledit->displayText();
         app_data=AsciiString2HexQString(ascii_data);
     }else app_data=ui->SendData_ledit->displayText();
+    QString ascii_text;
+    ascii_text = HexQString2AsciiString(app_data);
+    zigbee_send_list_add(ascii_text);
 
-    QString send_cmd=sop+app_len+cmd+na+app_cmd+app_data+fcs;
+    QString send_cmd=sop+len+cmd+na+app_cmd+app_data+fcs;
     send_cmd.remove(' ');
     send_cmd=Add_Space(0,send_cmd);
 
     QByteArray send_cmd_arr;
     StringToHex(send_cmd,send_cmd_arr);
     serial_write(send_cmd_arr,send_cmd);
+}
+
+// 设置自动发送
+void MainWindow::on_send_cycle_cBox_clicked(bool checked)
+{
+    bool ok;
+    int hex = ui->SendTime_ledit->displayText().toInt(&ok,10);
+    if(hex<100)hex=100;
+    if(checked){
+        zigbee_send_timer->start(hex);
+        ui->SendTime_ledit->show();
+        ui->SendTime_unit_label->show();
+    }
+    else {
+        zigbee_send_timer->stop();
+        ui->SendTime_ledit->hide();
+        ui->SendTime_unit_label->hide();
+    }
+}
+
+// 设置自动发送周期
+void MainWindow::on_SendTime_ledit_textChanged(const QString &arg1)
+{
+    bool ok;
+    int hex = arg1.toInt(&ok,10);
+    if(hex<100)hex=100;
+    zigbee_send_timer->setInterval(hex);
 }
 
 /** 其他 **/

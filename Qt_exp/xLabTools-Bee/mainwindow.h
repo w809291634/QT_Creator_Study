@@ -13,6 +13,7 @@
 #include <QToolTip>
 #include <iostream>
 #include <QListWidgetItem>
+#include <QKeyEvent>
 
 #define qdebug                  qDebug() << __LINE__
 #define BIT_0                   (1<<0)
@@ -31,6 +32,7 @@
                                             ui->info_listWidget->scrollToBottom();}}
 #define CLEAN_RECV_DATA             {recv_data_whole.clear();recv_show_whole.clear();}
 #define RECV_CMD_MAX_LEN            256
+#define MAX_STORAGE_NUM             10
 
 #define ZIGBEE_RES_TIMER_START      {zigbee_res_timer->start(1000);}
 #define ZIGBEE_RES_TIMER_START_2    {zigbee_res_timer->start(2000);}
@@ -38,9 +40,6 @@
 #define ZIGBEE_CMD_HAVE_DATA        {zigbee_flag|=BIT_6;}
 #define ZIGBEE_CMD_NO_DATA          {zigbee_flag&=~BIT_6;}
 
-
-/* zigbee */
-// 网络短地址范围 0xFFFF
 namespace Ui {
 class MainWindow;
 }
@@ -83,11 +82,13 @@ private:
 
     QTimer* zigbee_cycle_timer;         // 周期定时器
     QTimer* zigbee_res_timer;           // 指令回复超时 定时器.start会复位
-    QList<QString> zigbee_na_list;
-    QList<QString> zigbee_send_list;
+    QTimer* zigbee_send_timer;
 
-//    QLineEdit* lineEditFocus =
-//            qobject_cast<QLineEdit*>(ui->widget->focusWidget());
+    // 信息储存
+    QList<QString> zigbee_na_list;
+    int zigbee_na_index= 0;
+    QList<QString> zigbee_send_list;
+    int zigbee_send_index= 0;
 
     /** 公用部分 **/
     QTime m_time;
@@ -104,6 +105,7 @@ private slots:
     void init_app_ui();
     void init_app_timer();
     void get_time();
+    virtual void keyPressEvent(QKeyEvent *event);
 
     /** 串口管理接口函数 **/
     void serial_get_availablePorts();  // 获取有效的串口
@@ -140,6 +142,15 @@ private slots:
     void zigbee_write_config();
     void zigbee_write_config_handle();
 
+    // 储存信息
+    void zigbee_na_list_add(const QString& item);
+    void zigbee_na_list_index_reset();
+    QString zigbee_na_list_get(const int& flag);
+
+    void zigbee_send_list_add(const QString& item);
+    void zigbee_send_list_index_reset();
+    QString zigbee_send_list_get(const int& flag);
+
     /** ui槽函数 **/
     // 软件设置 组box
     void on_pushButton_OpenCom_clicked();
@@ -159,10 +170,14 @@ private slots:
     // 数据模拟 组box
     void on_lineEdit_SendNa_textEdited(const QString &arg1);
     void on_lineEdit_SendNa_inputRejected();
+    void on_lineEdit_SendNa_returnPressed();
 
     void on_send_data_btn_clicked();
     void on_SendData_ledit_textEdited(const QString &arg1);
     void on_SendData_ledit_inputRejected();
+
+    void on_send_cycle_cBox_clicked(bool checked);
+    void on_SendTime_ledit_textChanged(const QString &arg1);
     // 其他
     void on_count_num_clear_btn_clicked();
 };
