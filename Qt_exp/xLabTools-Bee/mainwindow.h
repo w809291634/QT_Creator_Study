@@ -88,7 +88,7 @@ private:
     // 位9：读配置完成
     unsigned short zigbee_count = 0;    // 发送指令的计数
 
-    QString send_data;                  // AT+SEND 发送的ascii数据
+    QString node_send_data="";          // AT+SEND 发送的ascii数据
 
     QTimer* zigbee_cycle_timer;         // 周期定时器
     QTimer* zigbee_res_timer;           // 指令回复超时 定时器.start会复位
@@ -139,7 +139,7 @@ private slots:
     /** zigbee 相关功能函数 **/
     void zigbee_app_init();
     void zigbee_ui_state_update();
-    void zigbee_calculate_send_data();
+    void zigbee_calculate_len_fcs();
     void zigbee_set_node_label();
     void zigbee_set_coordinator_label();
 
@@ -176,6 +176,7 @@ private slots:
     // 数据清除 组box
     void on_pushButton_DelRec_clicked();
     void on_pushButton_DelSend_clicked();
+    void on_comboBox_SendAppCmd_currentIndexChanged(int index);
 
     // 数据模拟 组box
     void on_lineEdit_SendNa_textEdited(const QString &arg1);

@@ -140,7 +140,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
                 }
             }
         }
-        zigbee_calculate_send_data();
+        zigbee_calculate_len_fcs();
     }
 }
 
@@ -264,6 +264,7 @@ int MainWindow::serial_read()
     return 0;
 }
 
+// 串口错误状态信号
 void MainWindow::serial_error(QSerialPort::SerialPortError serialPortError)
 {
     switch (serialPortError) {
@@ -411,8 +412,15 @@ void MainWindow::zigbee_app_init()
     ui->lineEdit_SendSop->setText("FE");
     ui->lineEdit_SendCmd->setText("29 00 02");
     QStringList AppCmdlist;
-    AppCmdlist<< "00 00" << "01 01" << "01 02" << "00 02" ;
+    AppCmdlist<< "00 00--指示协调器此数据需要转发给节点的应用程序数据"
+//              << "00 02--给节点发送数据"     //
+              << "01 01--指示协调器根据给定mac地址查找网络地址"
+              << "01 02--指示协调器根据给定的网络地址查找mac地址" ;
     ui->comboBox_SendAppCmd->addItems(AppCmdlist);
+    ui->comboBox_SendAppCmd->setToolTip("00 00 指示协调器此数据需要转发给节点的应用程序数据\r\n"
+//                                        "00 02 给节点发送数据\r\n"
+                                        "01 01 指示协调器根据给定mac地址查找网络地址\r\n"
+                                        "01 02 指示协调器根据给定的网络地址查找mac地址");
 
     // 工具提示
     ui->lineEdit_SendNa->setToolTip("1.固定hex格式,两个数组中间空格\r\n2.使用方向键‘up’或者‘down’获取历史\r\n3.数据正确回车保存");
@@ -659,7 +667,7 @@ void MainWindow::zigbee_na_list_add(const QString& item){
 
         zigbee_na_index=zigbee_na_list.length()-1;
         ui->lineEdit_SendNa->setText(zigbee_na_list[zigbee_na_index]);
-        zigbee_calculate_send_data();
+        zigbee_calculate_len_fcs();
     }
 }
 
@@ -702,7 +710,7 @@ void MainWindow::zigbee_send_list_add(const QString& item){
         if(ui->comboBox_Set_Send->currentIndex()==0)
             text=AsciiString2HexQString(text);
         ui->SendData_ledit->setText(text);
-        zigbee_calculate_send_data();
+        zigbee_calculate_len_fcs();
     }
 }
 
@@ -892,16 +900,17 @@ void MainWindow::zigbee_data_handle(QByteArray& data,QString& display_data)
         {
             count++;if(count>5)
             {
-                qdebug<< "zigbee AT命令 多次循环";
-                return;                                  // 防止错误，并不会执行
+                qdebug<< "zigbee AT命令 多次循环:" << recv_data_whole;
+                ZIGBEE_ATCMD_PROCESSED;
+                //return;
             }
             /** 处理发送 **/
-            if(recv_data_whole.contains(">")){
+            if(recv_data_whole.contains(">") && !node_send_data.isEmpty()){
                 QByteArray send_cmd_arr;
-                send_cmd_arr = send_data.toLatin1();
-                serial_write(send_cmd_arr,send_data);
+                send_cmd_arr = node_send_data.toLatin1();
+                serial_write(send_cmd_arr,node_send_data);
 
-                send_data.clear();
+                node_send_data.clear();
                 recv_data_whole.remove(">");            // 不关注有没有接收正常
             }
 
@@ -1057,6 +1066,11 @@ void MainWindow::zigbee_data_handle(QByteArray& data,QString& display_data)
                                 recv_show_whole=recv_show_whole.mid(_index+2); \
                                 continue;}                              // 一条指令帧处理完成
 
+#define ZIGBEE_EXTRA_CMD       else{ \
+                                    qdebug << "zigbee HEX命令 没有处理："<< vaild_cmd; \
+                                    ZIGBEE_CMD_PROCESSED; \
+                                }
+
         /* 长度检查 */
         recv_data_whole.clear();        // 到这里不再使用
         if(recv_show_whole.length()>RECV_CMD_MAX_LEN){
@@ -1066,8 +1080,9 @@ void MainWindow::zigbee_data_handle(QByteArray& data,QString& display_data)
 
         while(recv_show_whole.contains("FE")){
             count++;if(count>5){
-                qdebug<< "zigbee HEX命令多次循环";
-                return;                                  // 防止错误，并不会执行
+                qdebug<< "zigbee HEX命令多次循环:" << recv_show_whole;
+                ZIGBEE_CMD_PROCESSED;
+                // return;
             }
 
             /* 进行指令完整校验 */
@@ -1126,14 +1141,29 @@ void MainWindow::zigbee_data_handle(QByteArray& data,QString& display_data)
                         qdebug<< "ZIGBEE:指令出现错误";
                         ZIGBEE_CMD_PROCESSED;
                     }
+                    ZIGBEE_EXTRA_CMD;
                 }
                 /* 协调器发送数据到上位机 */
                 else if( CMD=="69 80" ){
                     QString NA=vaild_cmd.mid(12,5);         // 网络地址
                     QString APP_CMD=vaild_cmd.mid(18,5);    // 数据命令
                     zigbee_na_list_add(NA);
+                    /* 协调器根据给定 MAC 地址，查询网络地址 */
+                    if(APP_CMD=="01 01"){
+                        // 类似格式："FE 0E 69 80 00 00 01 01 00 12 4B 00 15 D3 D3 21 8B 32 33"
+                        // 获取数据帧
+                        QString data_frame=vaild_cmd.mid(4*3,data_len*3-1);
+                        QString na=data_frame.mid(12*3);
+
+                        // 更新信息
+                        QString info1=QString("[%1 %2]-->%3").
+                                arg(m_Time_str).arg(m_rf_type).arg(vaild_cmd);
+                        INFO_LISTWIDGET_UPDATE(info1);
+                        ZIGBEE_RECV_CMD_OK;
+                        ZIGBEE_CMD_PROCESSED;
+                    }
                     /* 协调器根据给定的网络地址，查询 MAC 地址 */
-                    if(APP_CMD=="01 02"){
+                    else if(APP_CMD=="01 02"){
                         // 类似格式："FE 0E 69 80 00 00 01 02 00 00 00 12 4B 00 1B D8 8D E6 15"
                         // 获取数据帧
                         QString data_frame=vaild_cmd.mid(4*3,data_len*3-1);
@@ -1200,6 +1230,25 @@ void MainWindow::zigbee_data_handle(QByteArray& data,QString& display_data)
                             ZIGBEE_CMD_PROCESSED;
                         }
                     }
+                    else if(APP_CMD=="00 02"){
+                        // 更新信息
+                        QString info1=QString("[%1 %2]-->%3").
+                                arg(m_Time_str).arg(m_rf_type).arg(vaild_cmd);
+                        INFO_LISTWIDGET_UPDATE(info1);
+                        ZIGBEE_CMD_PROCESSED;
+                    }
+                    else if(APP_CMD=="80 02"){
+                        // 更新信息
+                        QString info1=QString("[%1 %2]-->%3").
+                                arg(m_Time_str).arg(m_rf_type).arg(vaild_cmd);
+                        INFO_LISTWIDGET_UPDATE(info1);
+                        ZIGBEE_CMD_PROCESSED;
+                    }
+                    else{
+                        qdebug << "APP_CMD" << APP_CMD;
+                        qdebug << "zigbee HEX命令 没有处理："<< vaild_cmd;
+                        ZIGBEE_CMD_PROCESSED;
+                    }
                 }
                 // 特殊命令
                 else if( CMD=="41 80" ){
@@ -1207,7 +1256,6 @@ void MainWindow::zigbee_data_handle(QByteArray& data,QString& display_data)
                     if( APP_CMD=="02 02" ){
                         // 类似格式："FE 06 41 80 02 02 00 02 04 00 C1"
                         // 协调器接收手动复位命令成功的回复
-                        // 更新信息
                         QString info1=QString("[%1 %2]-->%3").
                                 arg(m_Time_str).arg(m_rf_type).arg(vaild_cmd);
                         INFO_LISTWIDGET_UPDATE(info1);
@@ -1215,12 +1263,20 @@ void MainWindow::zigbee_data_handle(QByteArray& data,QString& display_data)
                         ZIGBEE_RECV_CMD_OK;
                         ZIGBEE_CMD_PROCESSED;
                     }
+                    else if( APP_CMD=="01 02" ){
+                        // 类似格式："FE 06 41 80 01 02 00 02 04 00 C2"
+                        // 正常上电
+                        QString info1=QString("[%1 %2]-->%3").
+                                arg(m_Time_str).arg(m_rf_type).arg(vaild_cmd);
+                        INFO_LISTWIDGET_UPDATE(info1);
+
+                        ZIGBEE_RECV_CMD_OK;
+                        ZIGBEE_CMD_PROCESSED;
+                    }
+                    ZIGBEE_EXTRA_CMD;
                 }
 //                else if(){ZIGBEE_CMD_PROCESSED;}          // 处理其他指令
-                else {
-                    qdebug<< "zigbee HEX命令 没有处理指令："<< vaild_cmd;
-                    ZIGBEE_CMD_PROCESSED;
-                }
+                ZIGBEE_EXTRA_CMD;
             }else {
                 qdebug<< "zigbee HEX命令校验错误";
                 qdebug<< "recv_cmd:" << recv_cmd; qdebug<< "xor_data_frame:" << xor_data_frame;
@@ -1617,16 +1673,16 @@ void MainWindow::on_pushButton_DelSend_clicked()
 
 /** 数据模拟 组box **/
 // 计算长度和校验
-void MainWindow::zigbee_calculate_send_data()
+void MainWindow::zigbee_calculate_len_fcs()
 {
     QString LEN;    //hex
     QString CMD= ui->lineEdit_SendCmd->text();
     QString NA = "00 00";
-    QString APP_CMD=ui->comboBox_SendAppCmd->currentText();
+    QString APP_CMD=ui->comboBox_SendAppCmd->currentText().mid(0,5);
     QString APP_DATA ="00";   //hex
     QString FCS;
 
-    // APP_DATA
+    // APP_DATA 始终转换为hex格式
     if(ui->comboBox_Set_Send->currentIndex()==1){
         QString ascii_data=ui->SendData_ledit->displayText();
         APP_DATA=AsciiString2HexQString(ascii_data);
@@ -1700,7 +1756,7 @@ void MainWindow::on_lineEdit_SendNa_textEdited(const QString &arg1)
     }
 
     /** 计算长度和校验 **/
-    zigbee_calculate_send_data();
+    zigbee_calculate_len_fcs();
     zigbee_na_list_index_reset();
 }
 
@@ -1756,7 +1812,7 @@ void MainWindow::on_SendData_ledit_textEdited(const QString &arg1)
     }else{
     }
     /** 计算长度和校验 **/
-    zigbee_calculate_send_data();
+    zigbee_calculate_len_fcs();
     zigbee_send_list_index_reset();
 }
 
@@ -1790,23 +1846,25 @@ void MainWindow::on_send_data_btn_clicked()
 {
     if(zigbee_at_flag){
         /* at指令 */
-        QString send_cmd = "AT+SEND=";
-        if(ui->comboBox_Set_Send->currentIndex()==0){
-            QString hex_data=ui->SendData_ledit->displayText();
-            send_data=HexQString2AsciiString(hex_data);
-        }else send_data=ui->SendData_ledit->displayText();
-        send_cmd += ui->lineEdit_SendLen->text()+"\r\n";
 
-        QByteArray send_cmd_arr;
-        send_cmd_arr = send_cmd.toLatin1();
-        serial_write(send_cmd_arr,send_cmd);
+            QString send_cmd = "AT+SEND=";
+            if(ui->comboBox_Set_Send->currentIndex()==0){
+                QString hex_data=ui->SendData_ledit->displayText();
+                node_send_data=HexQString2AsciiString(hex_data);
+            }else node_send_data=ui->SendData_ledit->displayText();
+            send_cmd += ui->lineEdit_SendLen->text()+"\r\n";
+
+            QByteArray send_cmd_arr;
+            send_cmd_arr = send_cmd.toLatin1();
+            serial_write(send_cmd_arr,send_cmd);
+
     }else{
         /* hex指令 */
         QString sop="FE";
         QString len= ui->lineEdit_SendLen->text();
         QString cmd= ui->lineEdit_SendCmd->text();
         QString na = ui->lineEdit_SendNa->text();
-        QString app_cmd =  ui->comboBox_SendAppCmd->currentText();
+        QString app_cmd =  ui->comboBox_SendAppCmd->currentText().mid(0,5);
         QString app_data;
         QString fcs=ui->lineEdit_SendFcs->text();
 
@@ -1855,6 +1913,18 @@ void MainWindow::on_SendTime_ledit_textChanged(const QString &arg1)
     zigbee_send_timer->setInterval(cycle);
 }
 
+// 改变APP_CMD
+void MainWindow::on_comboBox_SendAppCmd_currentIndexChanged(int index)
+{
+    if(index==0){
+        ui->comboBox_Set_Rec->setCurrentIndex(1);
+        ui->comboBox_Set_Send->setCurrentIndex(1);
+    }else{
+        ui->comboBox_Set_Rec->setCurrentIndex(0);
+        ui->comboBox_Set_Send->setCurrentIndex(0);
+    }
+}
+
 /** 其他 **/
 // 清除发送计数
 void MainWindow::on_count_num_clear_btn_clicked()
@@ -1863,4 +1933,5 @@ void MainWindow::on_count_num_clear_btn_clicked()
     ui->label_RecNum->setText(QString::number(m_Rec_Num));
     ui->label_SendNum->setText(QString::number(m_Send_Num));
 }
+
 

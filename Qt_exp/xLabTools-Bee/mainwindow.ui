@@ -967,5 +967,25 @@
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>comboBox_SendAppCmd</sender>
+   <signal>currentIndexChanged(int)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>zigbee_calculate_len_fcs()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>944</x>
+     <y>625</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>848</x>
+     <y>637</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>zigbee_calculate_len_fcs()</slot>
+ </slots>
 </ui>
