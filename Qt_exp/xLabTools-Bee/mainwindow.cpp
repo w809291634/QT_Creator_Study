@@ -753,6 +753,10 @@ void MainWindow::zigbee_cmd_reset(bool update_ui)
 void MainWindow::zigbee_read_config(bool at_test)
 {
     if(Serial->isOpen()){
+        // 停止 自动发送
+        ui->send_cycle_cBox->setChecked(false);
+        on_send_cycle_cBox_clicked(false);
+
         zigbee_cmd_reset();
         zigbee_flag |= BIT_0;
         if(!at_test)
@@ -1313,6 +1317,10 @@ void MainWindow::zigbee_cmd_timeout()
 void MainWindow::zigbee_write_config()
 {
     if(Serial->isOpen()){
+        // 停止 自动发送
+        ui->send_cycle_cBox->setChecked(false);
+        on_send_cycle_cBox_clicked(false);
+
         zigbee_cmd_reset();
         zigbee_flag |= BIT_1;
         zigbee_flag |= BIT_2;       // 默认表示不再关心AT测试，连接串口后已经进行测试
