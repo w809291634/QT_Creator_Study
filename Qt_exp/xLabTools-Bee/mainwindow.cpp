@@ -81,7 +81,7 @@ void MainWindow::serial_ui_update()
     {
         /* 进行关闭串口后的显示 */
         ui->pushButton_OpenCom->setText("打开串口");                  //按键字变化
-        ui->label_State->setText("打开串口");
+        ui->label_State->setText("关闭串口");
         ui->comboBox_Com->setEnabled(true);
         ui->comboBox_Baud->setEnabled(true);
     }
@@ -89,7 +89,7 @@ void MainWindow::serial_ui_update()
     {
         /* 进行打开串口后的显示 */
         ui->pushButton_OpenCom->setText("关闭串口");                   //按键文字变化
-        ui->label_State->setText("关闭串口");
+        ui->label_State->setText("打开串口");
         ui->comboBox_Com->setEnabled(false);
         ui->comboBox_Baud->setEnabled(false);
     }
