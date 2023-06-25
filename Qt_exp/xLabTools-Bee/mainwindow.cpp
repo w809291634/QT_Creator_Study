@@ -1032,7 +1032,7 @@ void MainWindow::zigbee_data_handle(QByteArray& data,QString& display_data)
                 if(len > data_frame.length()) return;                       // 数据没有接收完整，下次进行
 
                 QString data=data_frame.mid(0,len);
-                if(data.at(0)!="{" || data.right(1)!="}"){
+                if(data.at(0)!=QString("{")|| data.right(1)!=QString("}")){
                     qdebug << "接收数据错误";
                     qdebug << "recv_data_whole:" << recv_data_whole;
                     qdebug << "data_frame:" << data_frame;
@@ -1601,7 +1601,7 @@ void MainWindow::on_info_listWidget_itemClicked(QListWidgetItem *item)
         int index=item_str.indexOf("{");
         if(index==-1)return;
         QString vaild_data=item_str.mid(index);
-        if(vaild_data[0]=="{" && vaild_data.right(1)=="}"){
+        if(vaild_data.at(0)==QString("{") && vaild_data.right(1)==QString("}")){
             int data_len=vaild_data.length();
             ui->lineEdit_RecLen->setText(QString::number(data_len));
             APP_DATA_HEX=AsciiString2HexQString(vaild_data);
